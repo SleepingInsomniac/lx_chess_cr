@@ -4,7 +4,7 @@ A chess program written in crystal
 
 ## Installation
 
-`shards build src/lx_chess.cr`
+`shards build --release --no-debug`
 
 ## Usage
 
@@ -14,15 +14,15 @@ Usage example:
 
 ```sh
 ╰─$ ./bin/lx_chess --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-8: ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ 
-7: ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟ 
-6:                 
-5:                 
-4:                 
-3:                 
-2: ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟ 
-1: ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ 
-   a b c d e f g h 
+8: ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+7: ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+6:
+5:
+4:
+3:
+2: ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+1: ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+   a b c d e f g h
 ```
 
 ## Contributing

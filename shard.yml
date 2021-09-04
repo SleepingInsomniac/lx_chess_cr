@@ -8,6 +8,6 @@ targets:
   lx_chess:
     main: src/lx_chess.cr
 
-crystal: 1.0.0
+crystal: 1.1.1
 
 license: MIT
