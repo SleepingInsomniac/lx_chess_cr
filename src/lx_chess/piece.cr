@@ -16,6 +16,8 @@ module LxChess
       Piece.new(id)
     end
 
+    property index : (Nil | Int8)
+
     def initialize(@id : Int8 = 0)
     end
 
@@ -24,7 +26,7 @@ module LxChess
     end
 
     def black?
-      @id & 0b1000 == 1
+      @id & 0b1000 == 0b1000
     end
 
     def color
