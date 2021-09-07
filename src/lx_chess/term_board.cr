@@ -8,6 +8,7 @@ module LxChess
 
     def initialize(@board : Board)
       @flipped = false
+
       @bg_dark = :green
       @bg_light = :light_green
       @fg_dark = :black

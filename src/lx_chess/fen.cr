@@ -1,13 +1,13 @@
 require "./board"
 require "./piece"
+require "./error"
 
 module LxChess
   class Fen
-    class Error < Exception
-    end
+    class InvalidFen < Error; end
 
     def self.parse(fen : String)
-      raise "Invalid FEN" unless fen =~ /[rnbqkp\d\/]+\s+[a-z]+\s[a-z\-]+\s+[a-z\-]+\s\d+\s\d+/i
+      raise InvalidFen.new("Invalid FEN") unless fen =~ /[rnbqkp\d\/]+\s+[a-z]+\s[a-z\-]+\s+[a-z\-]+\s\d+\s\d+/i
       placement, turn, castling, en_passant, halfmove_clock, fullmove_counter = fen.split(/\s+/)
 
       board = self.parse_placement(placement)

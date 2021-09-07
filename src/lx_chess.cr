@@ -4,6 +4,7 @@ require "./lx_chess/terminal"
 require "./lx_chess/term_board"
 require "./lx_chess/game"
 require "./lx_chess/fen"
+require "./lx_chess/notation"
 
 require "option_parser"
 
@@ -36,6 +37,16 @@ gb = LxChess::TermBoard.new(game.board)
 
 gb.draw
 puts
+
+loop do
+  print " > "
+  input = gets
+  if input
+    puts input.chomp
+    notation = LxChess::Notation.new(input)
+    puts notation.to_h
+  end
+end
 
 # gb.flip!
 # gb.draw
