@@ -42,8 +42,10 @@ loop do
   print " > "
   input = gets
   if input
-    notation = LxChess::Notation.new(input)
-    puts notation.to_s
+    # notation = LxChess::Notation.new(input)
+    # puts notation.to_s
+    input = input.to_i16 if input =~ /^\d+$/
+    puts game.moves(input)
   end
 rescue e : LxChess::Notation::InvalidNotation
   puts e.message

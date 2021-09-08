@@ -44,7 +44,7 @@ module LxChess
 
     # Set a piece an the board at a certain *index*
     def []=(index : Int, piece : Piece | Nil)
-      piece.index = index.to_i8
+      piece.index = index.to_i16
       @squares[index] = piece
     end
 
@@ -89,6 +89,11 @@ module LxChess
     def border_right(index)
       rank, dist_left = index.divmod(@width)
       index + (@width - dist_left) - 1
+    end
+
+    def rank(index)
+      rank, _ = index.divmod(@width)
+      rank
     end
   end
 end
