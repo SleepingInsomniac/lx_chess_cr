@@ -5,7 +5,6 @@ require "./lx_chess/term_board"
 require "./lx_chess/game"
 require "./lx_chess/fen"
 require "./lx_chess/notation"
-require "./lx_chess/move"
 
 require "option_parser"
 
@@ -44,9 +43,7 @@ loop do
   input = gets
   if input
     notation = LxChess::Notation.new(input)
-    puts notation.to_h
-    move = notation.to_move
-    puts move.to_s
+    puts notation.to_s
   end
 rescue e : LxChess::Notation::InvalidNotation
   puts e.message

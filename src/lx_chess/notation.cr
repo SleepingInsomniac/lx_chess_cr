@@ -1,8 +1,11 @@
 require "./error"
+require "./piece"
 
 module LxChess
   class Notation
-    class InvalidNotation < LxChess::Error; end
+    class InvalidNotation < Error; end
+
+    class InvalidMove < Error; end
 
     NOTATION_REGEX = %r{\A\s*
       (^[O0]-[O0])?\s*                           # 1.  castles kingside
@@ -17,114 +20,145 @@ module LxChess
       (e\.?p\.?)?\s*                             # 10. en passant
     \z}ix
 
-    getter notation : String
     @match : Regex::MatchData?
 
-    def initialize(@notation : String)
-      raise InvalidNotation.new("Notation cannot be blank") if @notation =~ /^\s*$/
-      raise InvalidNotation.new("'#{notation}` is not valid notation") if @notation !~ NOTATION_REGEX
-      @match = @notation.match(NOTATION_REGEX)
-      raise InvalidNotation.new("Unable to determine destination") unless castles? || square
-    end
+    property square : String?,
+      castles_k : Bool,
+      castles_q : Bool,
+      en_passant : Bool,
+      check : Bool,
+      checkmate : Bool,
+      takes : Bool,
+      piece_abbr : String?,
+      origin : String?,
+      promotion : Char?,
+      from : String?,
+      to : String?
 
-    def castles?
-      castles_k? || castles_q?
-    end
-
-    def castles_k?
-      match? 1
-    end
-
-    def castles_q?
-      match? 2
-    end
-
-    def piece_abbr
-      if _piece_abbr = match 3
-        _piece_abbr.upcase
+    def initialize(notation : String)
+      unless match = notation.match(NOTATION_REGEX)
+        raise InvalidNotation.new("Invalid notation.")
       end
-    end
 
-    def origin
-      if _origin = match 4
-        _origin.downcase
+      if _square = match[6]?
+        @square = _square.downcase
       end
-    end
 
-    def takes?
-      match? 5
-    end
+      @castles_k = match[1]? ? true : false
+      @castles_q = match[2]? ? true : false
+      @en_passant = match[10]? ? true : false
+      @check = match[8]? ? true : false
+      @checkmate = match[9]? ? true : false
+      @takes = match[5]? ? true : false
 
-    def square
-      if _square = match 6
-        _square.downcase
+      if _piece_abbr = match[3]?
+        @piece_abbr = _piece_abbr.upcase
       end
-    end
 
-    def promotion
-      if _promo = match 7
-        _promo[-1].upcase
+      if _origin = match[4]?
+        @origin = _origin.downcase
       end
+
+      if _promo = match[7]?
+        @promotion = _promo[-1].upcase
+      end
+
+      @from = nil
+      @to = nil
     end
 
-    def check?
-      match? 8
-    end
+    def initialize(
+      @square = nil,
+      @castles_k = false,
+      @castles_q = false,
+      @en_passant = false,
+      @check = false,
+      @checkmate = false,
+      @takes = false,
+      @piece_abbr = nil,
+      @origin = nil,
+      @promotion = nil,
+      @from = nil,
+      @to = nil
+    )
+      @piece_abbr = "K" if @castles_q || @castles_k
 
-    def checkmate?
-      match? 9
+      raise InvalidMove.new("Cannot castle and promote") if castles? && promotion
+      raise InvalidMove.new("Cannot take while castling") if castles? && takes?
     end
 
     def en_passant?
-      match? 10
+      @en_passant
     end
 
-    # ~~~~~~~~~~~~~~~~~~~
-
-    def pawn?
-      piece_abbr == "P" || piece_abbr.nil?
+    def castles_q?
+      @castles_q
     end
 
-    # ~~~~~~~~~~~~~~~~~~~
-
-    def to_move
-      Move.new(
-        square: square,
-        castles_k: castles_k?,
-        castles_q: castles_q?,
-        en_passant: en_passant?,
-        check: check?,
-        checkmate: checkmate?,
-        takes: takes?,
-        piece_abbr: piece_abbr,
-        origin: origin,
-        promotion: promotion,
-      )
+    def castles_k?
+      @castles_k
     end
 
-    def to_h
-      {
-        "square"     => square,
-        "castles_k"  => castles_k?,
-        "castles_q"  => castles_q?,
-        "en_passant" => en_passant?,
-        "check"      => check?,
-        "checkmate"  => checkmate?,
-        "takes"      => takes?,
-        "piece_abbr" => piece_abbr,
-        "origin"     => origin,
-        "promotion"  => promotion,
-      }
+    def castles?
+      @castles_k || @castles_q
     end
 
-    private def match?(n : Int)
-      match(n) ? true : false
+    def en_passant?
+      @en_passant
     end
 
-    private def match(n : Int)
-      return nil unless @match
-      match = @match.as(Regex::MatchData)
-      match[n]?
+    def check?
+      @check
+    end
+
+    def checkmate?
+      @checkmate
+    end
+
+    def takes?
+      @takes
+    end
+
+    def piece_id(turn = "w")
+      Piece.fen_id(fen_symbol(turn))
+    end
+
+    def fen_symbol(turn)
+      pa = @piece_abbr || "p"
+      turn == "w" ? pa.upcase : pa.downcase
+    end
+
+    def symbol
+      Piece.symbol(piece_id)
+    end
+
+    def to_s
+      buffer = IO::Memory.new
+
+      buffer << case
+      when castles_k?
+        "O-O"
+      when castles_q?
+        "O-O-O"
+      else
+        @piece_abbr
+      end
+
+      if @en_passant
+        if @from
+          buffer << @from.as(String)[0]
+        end
+      else
+        buffer << @origin if @origin
+      end
+
+      buffer << 'x' if @takes
+      buffer << @square
+      buffer << '+' if @check
+      buffer << '#' if @checkmate
+      buffer << " e.p." if @en_passant
+      buffer << '=' << @promotion if @promotion
+      buffer.to_s
     end
   end
 end
