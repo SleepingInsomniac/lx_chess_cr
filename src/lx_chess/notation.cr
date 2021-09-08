@@ -20,7 +20,7 @@ module LxChess
     getter notation : String
     @match : Regex::MatchData?
 
-    def initialize(@notation)
+    def initialize(@notation : String)
       raise InvalidNotation.new("Notation cannot be blank") if @notation =~ /^\s*$/
       raise InvalidNotation.new("'#{notation}` is not valid notation") if @notation !~ NOTATION_REGEX
       @match = @notation.match(NOTATION_REGEX)
@@ -82,10 +82,25 @@ module LxChess
     # ~~~~~~~~~~~~~~~~~~~
 
     def pawn?
-      piece_abbr == 'P' || piece_abbr.nil?
+      piece_abbr == "P" || piece_abbr.nil?
     end
 
     # ~~~~~~~~~~~~~~~~~~~
+
+    def to_move
+      Move.new(
+        square: square,
+        castles_k: castles_k?,
+        castles_q: castles_q?,
+        en_passant: en_passant?,
+        check: check?,
+        checkmate: checkmate?,
+        takes: takes?,
+        piece_abbr: piece_abbr,
+        origin: origin,
+        promotion: promotion,
+      )
+    end
 
     def to_h
       {
