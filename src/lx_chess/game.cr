@@ -11,15 +11,24 @@ module LxChess
       @turn = 0
     end
 
-    # TODO
+    # Parse standard algebraic notation
     def parse_san(notation : Notation)
-      raise "Not implemented yet"
+      index = @board.index(notation.square)
+      fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
+      pieces = @board.select { |piece| piece && piece.fen_symbol == fen_symbol }
+      pieces = pieces.select { |piece| piece && moves(piece.index.as(Int16)).includes?(index) }
+
+      raise "Ambiguous SAN" if pieces.size > 1
+      raise "Illegal move" if pieces.size == 0
+      piece = pieces.first
+
+      # from, to
+      [piece.as(Piece).index, index]
     end
 
     # Generate the psuedo-legal moves for a given *square*
-    # TODO: Add captures, add en passant, add boundaries, remove illegal moves
+    # TODO: add en passant, add boundaries, remove illegal moves
     def moves(square : (String | Int))
-      # moves = [] of Int16
       if piece = @board[square]
         raise "Expected piece at #{square} to have an index, but it was nil" unless piece.index
         set = MoveSet.new(piece, @board)
@@ -31,6 +40,8 @@ module LxChess
           set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16)
         end
         set.moves
+      else
+        [] of Int16
       end
     end
   end

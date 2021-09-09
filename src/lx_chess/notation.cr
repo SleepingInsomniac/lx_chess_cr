@@ -29,7 +29,7 @@ module LxChess
       check : Bool,
       checkmate : Bool,
       takes : Bool,
-      piece_abbr : String?,
+      piece_abbr : Char?,
       origin : String?,
       promotion : Char?,
       from : String?,
@@ -52,7 +52,7 @@ module LxChess
       @takes = match[5]? ? true : false
 
       if _piece_abbr = match[3]?
-        @piece_abbr = _piece_abbr.upcase
+        @piece_abbr = _piece_abbr[0].upcase
       end
 
       if _origin = match[4]?
@@ -84,7 +84,7 @@ module LxChess
       @piece_abbr = "K" if @castles_q || @castles_k
 
       raise InvalidMove.new("Cannot castle and promote") if castles? && promotion
-      raise InvalidMove.new("Cannot take while castling") if castles? && takes?
+      raise InvalidMove.new("Cannot capture while castling") if castles? && takes?
     end
 
     def en_passant?
@@ -124,7 +124,7 @@ module LxChess
     end
 
     def fen_symbol(turn)
-      pa = @piece_abbr || "p"
+      pa = @piece_abbr || 'p'
       turn == "w" ? pa.upcase : pa.downcase
     end
 

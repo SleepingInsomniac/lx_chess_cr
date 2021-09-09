@@ -12,7 +12,10 @@ module LxChess
     end
 
     def add_vector(x : Int16, y : Int16, limit : Int16)
-      offset = y * @board.width + x
+      add_vector(y * @board.width + x, limit)
+    end
+
+    def add_vector(offset : Int16, limit : Int16)
       location = @piece.index.as(Int16)
       limit.times do
         location = location + offset

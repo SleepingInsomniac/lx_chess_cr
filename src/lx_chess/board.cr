@@ -34,7 +34,7 @@ module LxChess
 
     # Retrieve a piece at a human cord ex: `A1`
     def [](cord : String)
-      @squares[cord_index(cord)]
+      @squares[index(cord)]
     end
 
     # Retrieve a piece at an *x* and *y* cord
@@ -50,7 +50,7 @@ module LxChess
 
     # Set a piece an the board at a certain human readable *cord*
     def []=(cord : String, piece : Piece | Nil)
-      self[cord_index(cord)] = piece
+      self[index(cord)] = piece
     end
 
     # Convert an *x* and *y* position into an index.
@@ -61,10 +61,15 @@ module LxChess
 
     # Convert human *cord* into an index on the board.
     # Ex: `A1` => `0`
-    def cord_index(cord : String)
+    def index(cord : String)
       x = LETTERS.index(cord[0]) || 0
       y = cord[1].to_i - 1
       index(x, y)
+    end
+
+    def cord(index : Int)
+      y, x = index.divmod(@width)
+      "#{LETTERS[x]}#{y + 1}"
     end
 
     # Distance to the left border from an *index*
