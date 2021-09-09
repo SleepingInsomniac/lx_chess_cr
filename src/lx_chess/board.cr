@@ -34,12 +34,12 @@ module LxChess
 
     # Retrieve a piece at a human cord ex: `A1`
     def [](cord : String)
-      @squares[index(cord)]
+      self[index(cord)]
     end
 
     # Retrieve a piece at an *x* and *y* cord
     def at(x : Int, y : Int)
-      @squares[index(x, y)]
+      self[index(x, y)]
     end
 
     # Set a piece an the board at a certain *index*
