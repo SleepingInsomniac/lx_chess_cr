@@ -7,7 +7,7 @@ module LxChess
   class Game
     property turn : Int8, board : Board
 
-    def initialize(@board : Board, @players = [] of Player)
+    def initialize(@board : Board = Board.new, @players = [] of Player)
       @turn = 0
     end
 
@@ -38,6 +38,43 @@ module LxChess
           set.add_vector(x: 0, y: 1, limit: (@board.rank(index) == 1 ? 2 : 1).to_i16)
         when 'p' # Black pawn
           set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16)
+        when 'B', 'b' # Bishop
+          set.add_vector(x: -1, y: 1, limit: 8)
+          set.add_vector(x: 1, y: 1, limit: 8)
+          set.add_vector(x: 1, y: -1, limit: 8)
+          set.add_vector(x: -1, y: -1, limit: 8)
+        when 'R', 'r' # Rook
+          set.add_vector(x: -1, y: 0, limit: 8)
+          set.add_vector(x: 0, y: 1, limit: 8)
+          set.add_vector(x: 1, y: 0, limit: 8)
+          set.add_vector(x: 0, y: -1, limit: 8)
+        when 'Q', 'q' # Queen
+          set.add_vector(x: -1, y: 1, limit: 8)
+          set.add_vector(x: 1, y: 1, limit: 8)
+          set.add_vector(x: 1, y: -1, limit: 8)
+          set.add_vector(x: -1, y: -1, limit: 8)
+          set.add_vector(x: -1, y: 0, limit: 8)
+          set.add_vector(x: 0, y: 1, limit: 8)
+          set.add_vector(x: 1, y: 0, limit: 8)
+          set.add_vector(x: 0, y: -1, limit: 8)
+        when 'N', 'n' # Knight
+          set.add_offsets([
+            {x: -2, y: 1}, {x: -1, y: 2},   # up left
+            {x: 1, y: 2}, {x: 2, y: 1},     # up right
+            {x: 2, y: -1}, {x: 1, y: -2},   # down right
+            {x: -1, y: -2}, {x: -2, y: -1}, # down left
+          ])
+        when 'K', 'k' # King
+          set.add_offsets([
+            {x: -1, y: 0},  # left
+            {x: -1, y: 1},  # left up
+            {x: 0, y: 1},   # up
+            {x: 1, y: 1},   # up right
+            {x: 1, y: 0},   # right
+            {x: 1, y: -1},  # down right
+            {x: 0, y: -1},  # down
+            {x: -1, y: -1}, # down left
+          ])
         end
         set.moves
       else

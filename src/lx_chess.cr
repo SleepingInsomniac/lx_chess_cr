@@ -43,12 +43,12 @@ loop do
   input = gets
   if input
     notation = LxChess::Notation.new(input)
-    # input = input.to_i16 if input =~ /^\d+$/
-    # puts game.moves(input)
-    from, to = game.parse_san(notation)
-    if from && to
-      puts "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
-    end
+    input = input.to_i16 if input =~ /^\d+$/
+    puts game.moves(input).map { |m| game.board.cord(m) }
+    # from, to = game.parse_san(notation)
+    # if from && to
+    #   puts "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
+    # end
   end
 rescue e : LxChess::Notation::InvalidNotation
   puts e.message

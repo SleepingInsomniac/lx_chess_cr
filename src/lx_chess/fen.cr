@@ -51,6 +51,10 @@ module LxChess
       board
     end
 
+    def self.standard
+      self.parse "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    end
+
     property board : Board
     property turn : String
     property castling : String
