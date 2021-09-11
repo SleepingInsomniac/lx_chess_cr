@@ -8,6 +8,7 @@ module LxChess
 
     def initialize(@board : Board)
       @flipped = false
+      @highlights = {} of Int16 => Tuple(Symbol, Symbol)
 
       @bg_dark = :green
       @bg_light = :light_green
@@ -42,6 +43,16 @@ module LxChess
       @flipped ? (width - 1).downto(0) : 0.upto(width - 1)
     end
 
+    def highlight(indicies : Array(Int16), color = {:light_yellow, :yellow})
+      indicies.each do |index|
+        @highlights[index] = color
+      end
+    end
+
+    def clear
+      @highlights = {} of Int16 => Tuple(Symbol, Symbol)
+    end
+
     def draw(io = STDOUT)
       ranks.each do |y|
         io << (y + 1) << ": "
@@ -50,7 +61,14 @@ module LxChess
           index = @board.index(x, y)
           piece = @board[index]
 
-          background = (index + y) % 2 == 0 ? @bg_dark : @bg_light
+          tint = (index + y) % 2 == 0 ? :light : :dark
+
+          background =
+            if @highlights[index]?
+              @highlights[index][tint == :light ? 0 : 1]
+            else
+              tint == :light ? @bg_light : @bg_dark
+            end
 
           if piece
             foreground = piece.white? ? @fg_light : @fg_dark

@@ -76,9 +76,7 @@ module LxChess
             {x: -1, y: -1}, # down left
           ])
         end
-        set.moves
-      else
-        [] of Int16
+        set
       end
     end
   end

@@ -11,13 +11,17 @@ module LxChess
       @moves = [] of Int16
     end
 
-    def add_vector(x : Int16, y : Int16, limit : Int16)
-      add_vector(y * @board.width + x, limit)
+    def origin
+      @piece.index.as(Int16)
     end
 
-    def add_vector(offset : Int16, limit : Int16)
+    def add_vector(x : Int16, y : Int16, limit : Int16)
+      dist_edge = @board.dist_left(origin) if x.negative?
+      dist_edge = @board.dist_right(origin) if x.positive?
+      limit = dist_edge if dist_edge && dist_edge < limit
+
+      offset = y * @board.width + x
       step = offset
-      location = @piece.index.as(Int16)
       limit.times do
         info = add_offset(offset)
         offset += step
@@ -27,14 +31,11 @@ module LxChess
 
     def add_offsets(offsets : Array(NamedTuple(x: Int32, y: Int32)))
       offsets.each do |cord|
+        # Check if the offset crosses the border
+        next if cord[:x].negative? && origin + cord[:x] < @board.border_left(origin)
+        next if cord[:x].positive? && origin + cord[:x] > @board.border_right(origin)
         offset = cord[:y] * @board.width + cord[:x]
         add_offset(offset.to_i16)
-      end
-    end
-
-    def add_offsets(offsets : Array(Int16))
-      offsets.each do |offset|
-        add_offset(offset)
       end
     end
 
@@ -42,10 +43,10 @@ module LxChess
       add_offset(y * @board.width + x)
     end
 
-    # TODO: Stop at the board edges
+    # Does not check for crossing border edges
     def add_offset(offset : Int16)
       added = false; stop = false
-      location = @piece.index.as(Int16) + offset
+      location = origin + offset
       if location < 0 || location >= @board.squares.size
         # Beyond top or bottom
         stop = true
