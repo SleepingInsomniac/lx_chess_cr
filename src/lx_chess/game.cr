@@ -8,12 +8,16 @@ module LxChess
   class Game
     class SanError < Error; end
 
-    property turn : Int8, board : Board
-    property move_clock : Int16
+    property turn : Int8 = 0
+    property board : Board
+    property move_clock : Int16 = 0
+    property en_passant_target : Int16?
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
-      @turn = 0
-      @move_clock = 0
+    end
+
+    def en_passant_target=(cord : String)
+      @en_passant_target = @board.index(cord)
     end
 
     def next_turn
@@ -49,6 +53,21 @@ module LxChess
       end
     end
 
+    def move_to_san(from : Int16, to : Int16, promotion : String? = nil)
+      raise "No piece at #{@board.cord(from)}" unless piece = @board[from]
+      en_passant = piece.pawn? && to == @en_passant_target
+
+      Notation.new(
+        square: @board.cord(to),
+        promotion: promotion,
+        piece_abbr: piece.fen_symbol,
+        from: @board.cord(from),
+        to: @board.cord(to),
+        takes: en_passant || !@board[to].nil?,
+        en_passant: en_passant
+      )
+    end
+
     # Attempt to reduce ambiguities in candidate moves
     def disambiguate_candidates(notation : Notation, pieces : Array(Piece | Nil))
       return pieces unless origin = notation.origin
@@ -76,7 +95,7 @@ module LxChess
     end
 
     # Generate the psuedo-legal moves for a given *square*
-    # TODO: add en passant, add boundaries, remove illegal moves
+    # TODO: remove illegal moves
     def moves(square : (String | Int))
       if piece = @board[square]
         raise "Expected piece at #{square} to have an index, but it was nil" unless piece.index
@@ -85,12 +104,16 @@ module LxChess
         case piece.fen_symbol
         when 'P' # White pawn
           set.add_vector(x: 0, y: 1, limit: (@board.rank(index) == 1 ? 2 : 1).to_i16)
-          set.add_vector(x: -1, y: 1, limit: 1) if @board.from(index, x: -1, y: 1)
-          set.add_vector(x: 1, y: 1, limit: 1) if @board.from(index, x: 1, y: 1)
+          capture_left = @board.rel_index(index, x: -1, y: 1)
+          capture_right = @board.rel_index(index, x: 1, y: 1)
+          set.add_vector(x: -1, y: 1, limit: 1) if @board[capture_left] || capture_left == @en_passant_target
+          set.add_vector(x: 1, y: 1, limit: 1) if @board[capture_right] || capture_right == @en_passant_target
         when 'p' # Black pawn
           set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16)
-          set.add_vector(x: -1, y: -1, limit: 1) if @board.from(index, x: -1, y: -1)
-          set.add_vector(x: 1, y: -1, limit: 1) if @board.from(index, x: 1, y: -1)
+          capture_left = @board.rel_index(index, x: -1, y: -1)
+          capture_right = @board.rel_index(index, x: 1, y: -1)
+          set.add_vector(x: -1, y: -1, limit: 1) if @board[capture_left] || capture_left == @en_passant_target
+          set.add_vector(x: 1, y: -1, limit: 1) if @board[capture_right] || capture_right == @en_passant_target
         when 'B', 'b' # Bishop
           set.add_vector(x: -1, y: 1, limit: 8)
           set.add_vector(x: 1, y: 1, limit: 8)

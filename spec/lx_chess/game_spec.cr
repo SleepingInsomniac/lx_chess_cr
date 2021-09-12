@@ -85,6 +85,19 @@ describe LxChess::Game do
       end
     end
 
+    it "generates captures for en passant targets" do
+      game = LxChess::Game.new
+      game.board["e5"] = LxChess::Piece.from_fen('P')
+      game.board["d5"] = LxChess::Piece.from_fen('p')
+      game.en_passant_target = "d6"
+      if move_set = game.moves("e5")
+        debug_board(game, move_set.moves)
+        move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e6 d6])
+      else
+        raise "no moves"
+      end
+    end
+
     it "correctly generates knight moves" do
       game = LxChess::Game.new
       game.board["c3"] = LxChess::Piece.from_fen('N')

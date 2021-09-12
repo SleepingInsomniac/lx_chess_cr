@@ -24,7 +24,7 @@ module LxChess
 
     def self.parse_placement(placement)
       ranks = placement.split('/')
-      width = ranks.first.size
+      width = ranks.reduce(0) { |max, rank| rank.size > max ? rank.size : max }
       height = ranks.size
       rank = height - 1
 

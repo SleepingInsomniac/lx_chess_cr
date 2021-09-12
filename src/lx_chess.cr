@@ -53,15 +53,39 @@ loop do
   end
   term.trunc
   input = gets
-  if input
-    notation = LxChess::Notation.new(input)
-    from, to = game.parse_san(notation)
-    if from && to
-      gb.clear
-      piece = game.board.move(from, to)
-      game.next_turn
-      gb.highlight([from.to_i16, to.to_i16])
-      log.unshift "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
+  case input
+  when /moves/
+    pieces = game.board.select do |piece|
+      next if piece.nil?
+      game.turn == 0 ? piece.white? : piece.black?
+    end
+
+    move_sets = pieces.map do |piece|
+      next unless piece
+      game.moves(piece.index.as(Int16))
+    end
+
+    move_string = move_sets.map do |set|
+      next unless set
+      next if set.moves.empty?
+      gb.highlight(set.moves, :blue)
+      from = "#{set.piece.fen_symbol}#{game.board.cord(set.origin)}: "
+      to = set.moves.map { |m| game.board.cord(m) }.join(", ")
+      from + to
+    end.compact.join(" | ")
+    log.unshift move_string
+  when nil
+  else
+    if input
+      notation = LxChess::Notation.new(input)
+      from, to = game.parse_san(notation)
+      if from && to
+        gb.clear
+        piece = game.board.move(from, to)
+        game.next_turn
+        gb.highlight([from.to_i16, to.to_i16])
+        log.unshift "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
+      end
     end
   end
 rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError

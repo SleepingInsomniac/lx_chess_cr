@@ -30,6 +30,8 @@ module LxChess
     # Retrieve a piece at an index
     def [](index : Int)
       @squares[index]
+    rescue e : IndexError
+      nil
     end
 
     # Retrieve a piece at a human cord ex: `A1`
@@ -42,10 +44,8 @@ module LxChess
       self[index(x, y)]
     end
 
-    # Retrieve a piece relative to an index
-    def from(index : Int, x : Int, y : Int)
-      index = index + x + (y * @width)
-      self[index]
+    def rel_index(index : Int, x : Int, y : Int)
+      (index + (y * @width) + x).to_i16
     end
 
     # Set a piece an the board at a certain *index*

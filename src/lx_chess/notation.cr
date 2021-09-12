@@ -1,5 +1,6 @@
 require "./error"
 require "./piece"
+require "./board"
 
 module LxChess
   class Notation

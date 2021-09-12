@@ -6,9 +6,14 @@ module LxChess
 
     property :bg_dark, :bg_light, :fg_dark, :fg_light
 
+    @themes = {
+      :yellow => {light: :light_yellow, dark: :yellow},
+      :blue   => {light: :light_blue, dark: :blue},
+    }
+
     def initialize(@board : Board)
       @flipped = false
-      @highlights = {} of Int16 => Tuple(Symbol, Symbol)
+      @highlights = {} of Int16 => Symbol
 
       @bg_dark = :green
       @bg_light = :light_green
@@ -43,19 +48,19 @@ module LxChess
       @flipped ? (width - 1).downto(0) : 0.upto(width - 1)
     end
 
-    def highlight(indicies : Array(Int16), color = {:light_yellow, :yellow})
+    def highlight(indicies : Array(Int16), theme : Symbol = :yellow)
       indicies.each do |index|
-        @highlights[index] = color
+        @highlights[index] = theme
       end
     end
 
     def clear
-      @highlights = {} of Int16 => Tuple(Symbol, Symbol)
+      @highlights = {} of Int16 => Symbol
     end
 
     def draw(io = STDOUT)
       ranks.each do |y|
-        io << (y + 1) << ": "
+        io << (y + 1).to_s.rjust(3) << ": "
 
         files.each do |x|
           index = @board.index(x, y)
@@ -65,7 +70,7 @@ module LxChess
 
           background =
             if @highlights[index]?
-              @highlights[index][tint == :light ? 0 : 1]
+              @themes[@highlights[index]][tint]
             else
               tint == :light ? @bg_light : @bg_dark
             end
@@ -81,7 +86,7 @@ module LxChess
         io << "\n"
       end
 
-      io << "   "
+      io << "     "
 
       files.each do |x|
         io << LETTERS[x] << " "
