@@ -9,9 +9,20 @@ module LxChess
     class SanError < Error; end
 
     property turn : Int8, board : Board
+    property move_clock : Int16
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
       @turn = 0
+      @move_clock = 0
+    end
+
+    def next_turn
+      @turn = (@turn == 0 ? 1 : 0).to_i8
+      @move_clock += 1
+    end
+
+    def full_moves
+      (@move_clock / 2).to_i16
     end
 
     # Parse standard algebraic notation
@@ -27,11 +38,12 @@ module LxChess
       end
 
       raise SanError.new("Ambiguous SAN") if pieces.size > 1
-      raise SanError.new("Illegal move") if pieces.size == 0
-      piece = pieces.first
-
-      # from, to
-      [piece.as(Piece).index, index]
+      if piece = pieces.first?
+        # from, to
+        [piece.index, index]
+      else
+        raise SanError.new("#{notation.to_s} is an illegal move")
+      end
     end
 
     # Generate the psuedo-legal moves for a given *square*
@@ -44,8 +56,12 @@ module LxChess
         case piece.fen_symbol
         when 'P' # White pawn
           set.add_vector(x: 0, y: 1, limit: (@board.rank(index) == 1 ? 2 : 1).to_i16)
+          set.add_vector(x: -1, y: 1, limit: 1) if @board.from(index, x: -1, y: 1)
+          set.add_vector(x: 1, y: 1, limit: 1) if @board.from(index, x: 1, y: 1)
         when 'p' # Black pawn
           set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16)
+          set.add_vector(x: -1, y: -1, limit: 1) if @board.from(index, x: -1, y: -1)
+          set.add_vector(x: 1, y: -1, limit: 1) if @board.from(index, x: 1, y: -1)
         when 'B', 'b' # Bishop
           set.add_vector(x: -1, y: 1, limit: 8)
           set.add_vector(x: 1, y: 1, limit: 8)

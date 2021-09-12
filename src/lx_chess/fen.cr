@@ -28,7 +28,7 @@ module LxChess
       height = ranks.size
       rank = height - 1
 
-      board = Board.new(width, height)
+      board = Board.new(width.to_i16, height.to_i16)
       ranks.map { |r| r.chars }.each do |pieces|
         file = 0
 
@@ -70,6 +70,13 @@ module LxChess
       @halfmove_clock : Int16,
       @fullmove_counter : Int16
     )
+    end
+
+    def placement
+      @board.map { |piece| piece ? piece.fen_symbol : nil }
+        .each_slice(@board.width)
+        .map { |row| row.chunks { |r| r.nil? }.map { |chunked, values| chunked ? values.size : values.join }.first }
+        .join('/')
     end
   end
 end

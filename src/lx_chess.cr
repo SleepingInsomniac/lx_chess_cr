@@ -31,27 +31,44 @@ OptionParser.parse do |parser|
   end
 end
 
+log = [] of String
 fen = LxChess::Fen.parse(options["fen_string"])
 game = LxChess::Game.new(board: fen.board)
 gb = LxChess::TermBoard.new(game.board)
+term = LxChess::Terminal.new
 
 loop do
+  term.move 0, 0
+  puts fen.placement
+  puts
   gb.draw
   puts
-  print " > "
+  puts
+  if game.turn == 0
+    print " #{game.full_moves + 1}. "
+  else
+    print " #{game.full_moves + 1}. ... "
+  end
+  term.trunc
   input = gets
   if input
     notation = LxChess::Notation.new(input)
     from, to = game.parse_san(notation)
     if from && to
+      gb.clear
       piece = game.board.move(from, to)
-      puts "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
+      game.next_turn
+      gb.highlight([from.to_i16, to.to_i16])
+      log.unshift "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
     end
   end
-rescue e : LxChess::Notation::InvalidNotation
-  puts e.message
-rescue e : LxChess::Game::SanError
-  puts e.message
+rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError
+  if msg = e.message
+    log.unshift msg
+  end
+ensure
+  puts
+  log.each { |l| puts l }
 end
 
 # gb.flip!

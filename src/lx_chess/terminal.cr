@@ -24,6 +24,20 @@ module LxChess
     end
 
     def initialize(@io = STDOUT)
+      @x = 0
+      @y = 0
+    end
+
+    # Move cursor to line, column
+    def move(x, y)
+      @x = x
+      @y = y
+      @io.print "\033[#{@x};#{@y}H"
+    end
+
+    # Delete the rest of the line from cursor pos
+    def trunc
+      @io.print "\033[K"
     end
   end
 end

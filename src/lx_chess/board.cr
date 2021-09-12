@@ -8,7 +8,7 @@ module LxChess
 
     property :width, :height, :squares
 
-    def initialize(@width : Int = 8, @height : Int = 8)
+    def initialize(@width : Int16 = 8, @height : Int16 = 8)
       @squares = Array(Piece | Nil).new(@width * @height) { nil }
     end
 
@@ -42,6 +42,12 @@ module LxChess
       self[index(x, y)]
     end
 
+    # Retrieve a piece relative to an index
+    def from(index : Int, x : Int, y : Int)
+      index = index + x + (y * @width)
+      self[index]
+    end
+
     # Set a piece an the board at a certain *index*
     def []=(index : Int, piece : Piece | Nil)
       piece.index = index.to_i16 if piece
@@ -56,7 +62,7 @@ module LxChess
     # Convert an *x* and *y* position into an index.
     # Ex: `4, 4` => `36`
     def index(x : Int, y : Int)
-      (y * @width) + x
+      ((y * @width) + x).to_i16
     end
 
     # Convert human *cord* into an index on the board.

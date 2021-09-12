@@ -48,10 +48,36 @@ describe LxChess::Game do
       end
     end
 
-    it "correctly generates black white pawn moves" do
+    it "correctly generates black pawn moves" do
       game = LxChess::Game.new
       game.board["e6"] = LxChess::Piece.from_fen('p')
       if move_set = game.moves("e6")
+        debug_board(game, move_set.moves)
+        move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
+      else
+        raise "no moves"
+      end
+    end
+
+    it "generates captures for white pawns" do
+      game = LxChess::Game.new
+      game.board["e4"] = LxChess::Piece.from_fen('P')
+      game.board["f5"] = LxChess::Piece.from_fen('p')
+      game.board["d5"] = LxChess::Piece.from_fen('p')
+      if move_set = game.moves("e4")
+        debug_board(game, move_set.moves)
+        move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5 d5 f5])
+      else
+        raise "no moves"
+      end
+    end
+
+    it "does not generates captures pawns capturing own pieces" do
+      game = LxChess::Game.new
+      game.board["e4"] = LxChess::Piece.from_fen('P')
+      game.board["f5"] = LxChess::Piece.from_fen('P')
+      game.board["d5"] = LxChess::Piece.from_fen('P')
+      if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
       else
