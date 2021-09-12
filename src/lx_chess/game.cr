@@ -2,9 +2,12 @@ require "./player"
 require "./board"
 require "./notation"
 require "./move_set"
+require "./error"
 
 module LxChess
   class Game
+    class SanError < Error; end
+
     property turn : Int8, board : Board
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
@@ -15,11 +18,16 @@ module LxChess
     def parse_san(notation : Notation)
       index = @board.index(notation.square)
       fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
-      pieces = @board.select { |piece| piece && piece.fen_symbol == fen_symbol }
-      pieces = pieces.select { |piece| piece && moves(piece.index.as(Int16)).includes?(index) }
+      pieces = @board.select do |piece|
+        next if piece.nil?
+        next unless piece.fen_symbol == fen_symbol
+        if move_set = moves(piece.index.as(Int16))
+          move_set.moves.includes?(index)
+        end
+      end
 
-      raise "Ambiguous SAN" if pieces.size > 1
-      raise "Illegal move" if pieces.size == 0
+      raise SanError.new("Ambiguous SAN") if pieces.size > 1
+      raise SanError.new("Illegal move") if pieces.size == 0
       piece = pieces.first
 
       # from, to

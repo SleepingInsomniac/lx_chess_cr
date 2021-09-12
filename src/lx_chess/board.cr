@@ -44,7 +44,7 @@ module LxChess
 
     # Set a piece an the board at a certain *index*
     def []=(index : Int, piece : Piece | Nil)
-      piece.index = index.to_i16
+      piece.index = index.to_i16 if piece
       @squares[index] = piece
     end
 
@@ -99,6 +99,12 @@ module LxChess
     def rank(index)
       rank, _ = index.divmod(@width)
       rank
+    end
+
+    def move(from : (String | Int), to : (String | Int))
+      piece = self[from.to_i16]
+      self[from.to_i16] = nil
+      self[to.to_i16] = piece
     end
   end
 end

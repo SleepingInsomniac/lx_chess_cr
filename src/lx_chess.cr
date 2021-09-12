@@ -35,24 +35,22 @@ fen = LxChess::Fen.parse(options["fen_string"])
 game = LxChess::Game.new(board: fen.board)
 gb = LxChess::TermBoard.new(game.board)
 
-gb.draw
-puts
-
 loop do
+  gb.draw
+  puts
   print " > "
   input = gets
   if input
     notation = LxChess::Notation.new(input)
-    input = input.to_i16 if input =~ /^\d+$/
-    if move_set = game.moves(input)
-      puts move_set.moves.map { |m| game.board.cord(m) }
+    from, to = game.parse_san(notation)
+    if from && to
+      piece = game.board.move(from, to)
+      puts "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
     end
-    # from, to = game.parse_san(notation)
-    # if from && to
-    #   puts "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
-    # end
   end
 rescue e : LxChess::Notation::InvalidNotation
+  puts e.message
+rescue e : LxChess::Game::SanError
   puts e.message
 end
 

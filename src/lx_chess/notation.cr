@@ -65,6 +65,7 @@ module LxChess
 
       @from = nil
       @to = nil
+      validate
     end
 
     def initialize(
@@ -82,7 +83,10 @@ module LxChess
       @to = nil
     )
       @piece_abbr = "K" if @castles_q || @castles_k
+      validate
+    end
 
+    def validate
       raise InvalidMove.new("Cannot castle and promote") if castles? && promotion
       raise InvalidMove.new("Cannot capture while castling") if castles? && takes?
     end
