@@ -39,7 +39,9 @@ term = LxChess::Terminal.new
 
 loop do
   term.move 0, 0
-  puts fen.placement
+  print fen.placement
+  term.trunc
+  puts
   puts
   gb.draw
   puts
@@ -68,7 +70,10 @@ rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError
   end
 ensure
   puts
-  log.each { |l| puts l }
+  log.each { |l| print l; term.trunc; puts }
+  until log.size < 8
+    log.pop
+  end
 end
 
 # gb.flip!

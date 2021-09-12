@@ -68,7 +68,7 @@ module LxChess
     # Convert human *cord* into an index on the board.
     # Ex: `A1` => `0`
     def index(cord : String)
-      x = LETTERS.index(cord[0]) || 0
+      x = LETTERS.index(cord[0].downcase) || 0
       y = cord[1].to_i - 1
       index(x, y)
     end
@@ -102,9 +102,14 @@ module LxChess
       index + (@width - dist_left) - 1
     end
 
-    def rank(index)
+    def rank(index : Int16)
       rank, _ = index.divmod(@width)
       rank
+    end
+
+    def file(index : Int16)
+      _, file = index.divmod(@width)
+      file
     end
 
     def move(from : (String | Int), to : (String | Int))

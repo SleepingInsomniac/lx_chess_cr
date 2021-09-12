@@ -73,10 +73,10 @@ module LxChess
     end
 
     def placement
-      @board.map { |piece| piece ? piece.fen_symbol : nil }
+      rows = @board.map { |piece| piece ? piece.fen_symbol : nil }
         .each_slice(@board.width)
-        .map { |row| row.chunks { |r| r.nil? }.map { |chunked, values| chunked ? values.size : values.join }.first }
-        .join('/')
+        .map { |row| row.chunks { |r| r.nil? }.map { |chunked, values| chunked ? values.size : values.join }.join }
+        .to_a.reverse.join('/')
     end
   end
 end

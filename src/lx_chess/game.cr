@@ -37,12 +37,41 @@ module LxChess
         end
       end
 
-      raise SanError.new("Ambiguous SAN") if pieces.size > 1
+      if pieces.size > 1
+        pieces = disambiguate_candidates(notation, pieces)
+      end
+      raise SanError.new("#{notation.to_s} is ambiguous") if pieces.size > 1
       if piece = pieces.first?
         # from, to
         [piece.index, index]
       else
         raise SanError.new("#{notation.to_s} is an illegal move")
+      end
+    end
+
+    # Attempt to reduce ambiguities in candidate moves
+    def disambiguate_candidates(notation : Notation, pieces : Array(Piece | Nil))
+      return pieces unless origin = notation.origin
+      case origin
+      when /[a-z]\d/
+        piece = @board[origin]
+        pieces.select { |c| c == piece }
+      when /[a-z]/
+        file = Board::LETTERS.index(origin[0].downcase) || 0
+        pieces.select do |c|
+          next unless c
+          next unless index = c.index
+          @board.file(index) == file
+        end
+      when /\d/
+        rank = origin.to_i16
+        pieces.select do |c|
+          next unless c
+          next unless index = c.index
+          @board.rank(index) == rank
+        end
+      else
+        pieces
       end
     end
 
