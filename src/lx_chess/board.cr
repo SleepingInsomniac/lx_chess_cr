@@ -34,7 +34,7 @@ module LxChess
       nil
     end
 
-    # Retrieve a piece at a human cord ex: `A1`
+    # Retrieve a piece at a human cord ex: `a1`
     def [](cord : String)
       self[index(cord)]
     end
@@ -48,13 +48,13 @@ module LxChess
       (index + (y * @width) + x).to_i16
     end
 
-    # Set a piece an the board at a certain *index*
+    # Set a piece on the board at a certain *index*
     def []=(index : Int, piece : Piece | Nil)
       piece.index = index.to_i16 if piece
       @squares[index] = piece
     end
 
-    # Set a piece an the board at a certain human readable *cord*
+    # Set a piece on the board at a certain human readable *cord*
     def []=(cord : String, piece : Piece | Nil)
       self[index(cord)] = piece
     end
@@ -66,13 +66,14 @@ module LxChess
     end
 
     # Convert human *cord* into an index on the board.
-    # Ex: `A1` => `0`
+    # Ex: `a1` => `0`
     def index(cord : String)
       x = LETTERS.index(cord[0].downcase) || 0
       y = cord[1].to_i - 1
       index(x, y)
     end
 
+    # Convert an *index* into a human coordinate (ex: `a1`)
     def cord(index : Int)
       y, x = index.divmod(@width)
       "#{LETTERS[x]}#{y + 1}"
@@ -102,20 +103,27 @@ module LxChess
       index + (@width - dist_left) - 1
     end
 
+    # The rank of a given index
+    # `rank(4) # => 0`
+    # `rank(8) # => 1`
     def rank(index : Int16)
       rank, _ = index.divmod(@width)
       rank
     end
 
+    # The file of a given index
+    # `file(4) # => 4`
+    # `file(8) # => 0`
     def file(index : Int16)
       _, file = index.divmod(@width)
       file
     end
 
-    def move(from : (String | Int), to : (String | Int))
-      piece = self[from.to_i16]
-      self[from.to_i16] = nil
-      self[to.to_i16] = piece
+    # Move a piece *from* a position *to* a new position
+    def move(from : (String | Int16), to : (String | Int16))
+      piece = self[from]
+      self[from] = nil
+      self[to] = piece
     end
   end
 end

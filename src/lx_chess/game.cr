@@ -36,15 +36,13 @@ module LxChess
         end
       end
 
-      if pieces.size > 1
-        pieces = disambiguate_candidates(notation, pieces)
-      end
+      pieces = disambiguate_candidates(notation, pieces)
       raise SanError.new("#{notation.to_s} is ambiguous") if pieces.size > 1
       if piece = pieces.first?
         # from, to
-        [piece.index, index]
+        [piece.index.as(Int16), index.as(Int16)]
       else
-        raise SanError.new("#{notation.to_s} is an illegal move")
+        raise SanError.new("no moves for #{notation.to_s}")
       end
     end
 
@@ -156,7 +154,7 @@ module LxChess
       make_move(from: @board.index(from), to: @board.index(to), promotion: promotion)
     end
 
-    def make_move(from : Int, to : Int, promotion : Char? = nil)
+    def make_move(from : Int16, to : Int16, promotion : Char? = nil)
       san = move_to_san(from, to, promotion)
       piece = @board.move(from, to)
       next_turn
