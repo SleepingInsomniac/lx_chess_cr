@@ -33,7 +33,9 @@ end
 
 log = [] of String
 fen = LxChess::Fen.parse(options["fen_string"])
-game = LxChess::Game.new(board: fen.board)
+player_white = LxChess::Player.new
+player_black = LxChess::Player.new
+game = LxChess::Game.new(board: fen.board, players: [player_white, player_black])
 gb = LxChess::TermBoard.new(game.board)
 term = LxChess::Terminal.new
 
@@ -74,6 +76,22 @@ loop do
       from + to
     end.compact.join(" | ")
     log.unshift move_string
+  when /\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i
+    if input
+      if matches = input.downcase.match(/\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i)
+        from = matches[1]
+        to = matches[2]
+        promo = if matches[3]?
+                  matches[3][0]
+                end
+        if from && to
+          gb.clear
+          san = game.make_move(from, to)
+          gb.highlight([game.board.index(from), game.board.index(to)])
+          log.unshift "#{san.to_s}: #{from} => #{to}"
+        end
+      end
+    end
   when nil
   else
     if input
@@ -81,10 +99,9 @@ loop do
       from, to = game.parse_san(notation)
       if from && to
         gb.clear
-        piece = game.board.move(from, to)
-        game.next_turn
+        san = game.make_move(from, to)
         gb.highlight([from.to_i16, to.to_i16])
-        log.unshift "#{notation.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
+        log.unshift "#{san.to_s}: #{game.board.cord(from)} => #{game.board.cord(to)}"
       end
     end
   end

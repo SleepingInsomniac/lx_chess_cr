@@ -20,11 +20,6 @@ module LxChess
       @en_passant_target = @board.index(cord)
     end
 
-    def next_turn
-      @turn = (@turn == 0 ? 1 : 0).to_i8
-      @move_clock += 1
-    end
-
     def full_moves
       (@move_clock / 2).to_i16
     end
@@ -53,7 +48,8 @@ module LxChess
       end
     end
 
-    def move_to_san(from : Int16, to : Int16, promotion : String? = nil)
+    # TODO: add check, checkmate, etc.
+    def move_to_san(from : Int, to : Int, promotion : String? = nil)
       raise "No piece at #{@board.cord(from)}" unless piece = @board[from]
       en_passant = piece.pawn? && to == @en_passant_target
 
@@ -154,6 +150,23 @@ module LxChess
         end
         set
       end
+    end
+
+    def make_move(from : String, to : String, promotion : Char? = nil)
+      make_move(from: @board.index(from), to: @board.index(to), promotion: promotion)
+    end
+
+    def make_move(from : Int, to : Int, promotion : Char? = nil)
+      san = move_to_san(from, to, promotion)
+      piece = @board.move(from, to)
+      next_turn
+      san
+    end
+
+    def next_turn
+      @turn += 1
+      @turn = @turn % @players.size
+      @move_clock += 1
     end
   end
 end

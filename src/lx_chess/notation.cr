@@ -19,22 +19,22 @@ module LxChess
       (\+)?\s*                                   # 8.  check
       (\#)?\s*                                   # 9.  checkmate
       (e\.?p\.?)?\s*                             # 10. en passant
-    \z}ix
+    \z}x
 
     @match : Regex::MatchData?
 
-    property square : String?,
-      castles_k : Bool,
-      castles_q : Bool,
-      en_passant : Bool,
-      check : Bool,
-      checkmate : Bool,
-      takes : Bool,
-      piece_abbr : Char?,
-      origin : String?,
-      promotion : Char?,
-      from : String?,
-      to : String?
+    property square : String?
+    property castles_k : Bool
+    property castles_q : Bool
+    property en_passant : Bool
+    property check : Bool
+    property checkmate : Bool
+    property takes : Bool
+    getter piece_abbr : Char?
+    property origin : String?
+    property promotion : Char?
+    property from : String?
+    property to : String?
 
     def initialize(notation : String)
       unless match = notation.match(NOTATION_REGEX)
@@ -83,13 +83,19 @@ module LxChess
       @from = nil,
       @to = nil
     )
-      @piece_abbr = "K" if @castles_q || @castles_k
+      @piece_abbr = 'K' if @castles_q || @castles_k
       validate
     end
 
     def validate
       raise InvalidMove.new("Cannot castle and promote") if castles? && promotion
       raise InvalidMove.new("Cannot capture while castling") if castles? && takes?
+    end
+
+    def piece_abbr
+      if abbr = @piece_abbr
+        abbr.upcase
+      end
     end
 
     def en_passant?
@@ -146,7 +152,7 @@ module LxChess
       when castles_q?
         "O-O-O"
       else
-        @piece_abbr
+        piece_abbr != 'P' || @takes ? piece_abbr : nil
       end
 
       if @en_passant

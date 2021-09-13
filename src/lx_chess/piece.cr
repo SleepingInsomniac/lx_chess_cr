@@ -48,5 +48,9 @@ module LxChess
     def fen_symbol
       FEN_SYMBOLS[@id]
     end
+
+    def pawn?
+      @id & 0b0111 == PAWN
+    end
   end
 end
