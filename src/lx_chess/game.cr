@@ -5,6 +5,7 @@ require "./move_set"
 require "./error"
 
 module LxChess
+  # Represents a standard game of Chess
   class Game
     class SanError < Error; end
 

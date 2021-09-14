@@ -3,6 +3,8 @@ require "./piece"
 require "./board"
 
 module LxChess
+  # Parses Standard Algebraic Notation
+  # ex: `Pbxc8=Q` pawn on the b file takes c8 and promotes to Queen
   class Notation
     class InvalidNotation < Error; end
 

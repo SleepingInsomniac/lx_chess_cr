@@ -1,6 +1,8 @@
 require "./piece"
 
 module LxChess
+  # A *Board* represents the squares of a chess board. it also handles coversion of
+  # indicies <=> cords. The internal representation is a contiguous array
   class Board
     include Enumerable(Piece | Nil)
 

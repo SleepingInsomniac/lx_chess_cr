@@ -3,6 +3,7 @@ require "./piece"
 require "./error"
 
 module LxChess
+  # Forsyth-Edwards Notation parser and converter
   class Fen
     class InvalidFen < Error; end
 

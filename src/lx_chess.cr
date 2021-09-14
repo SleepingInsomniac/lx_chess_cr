@@ -24,6 +24,11 @@ OptionParser.parse do |parser|
     exit
   end
 
+  parser.on("-v", "--version", "show version information") do
+    puts "lx_chess version #{LxChess::VERSION}"
+    exit
+  end
+
   parser.invalid_option do |flag|
     STDERR.puts "ERROR: #{flag} is not a valid option."
     STDERR.puts parser
