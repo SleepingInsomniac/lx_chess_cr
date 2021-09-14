@@ -9,10 +9,13 @@ module LxChess
   class Game
     class SanError < Error; end
 
+    class IllegalMove < Error; end
+
     property turn : Int8 = 0
     property board : Board
     property move_clock : Int16 = 0
     property en_passant_target : Int16?
+    property fifty_move_rule : Int8 = 0
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
     end
@@ -156,8 +159,34 @@ module LxChess
     end
 
     def make_move(from : Int16, to : Int16, promotion : Char? = nil)
+      raise IllegalMove.new("#{@board.cord(from)} is empty") unless piece = @board[from]
+      if move_set = moves(from)
+        raise IllegalMove.new("#{@board.cord(to)} is not available for #{@board.cord(from)}") unless move_set.moves.includes?(to)
+      else
+        raise IllegalMove.new("#{@board.cord(from)} has no moves")
+      end
+
       san = move_to_san(from, to, promotion)
-      piece = @board.move(from, to)
+
+      # Reset the 50 move rule for captures and pawn moves
+      if piece.pawn? || !@board[to].nil?
+        @fifty_move_rule = 0
+      else
+        @fifty_move_rule += 1
+      end
+
+      # En passant
+      if piece.pawn?
+        distance = from - to
+        if distance.abs == @board.width * 2
+          @en_passant_target = distance > 0 ? to + @board.width : to - @board.width
+        elsif to == @en_passant_target
+          capture = distance > 0 ? to + @board.width : to - @board.width
+          @board[capture] = nil
+        end
+      end
+
+      @board.move(from, to)
       next_turn
       san
     end

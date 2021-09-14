@@ -110,7 +110,7 @@ loop do
       end
     end
   end
-rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError
+rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError | LxChess::Game::IllegalMove
   if msg = e.message
     log.unshift msg
   end
