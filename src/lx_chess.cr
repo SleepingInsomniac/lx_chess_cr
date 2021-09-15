@@ -8,9 +8,7 @@ require "./lx_chess/notation"
 
 require "option_parser"
 
-options = {
-  "fen_string" => "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-}
+options = {} of String => String | Nil
 
 OptionParser.parse do |parser|
   parser.banner = "Usage: lx_chess [fen]"
@@ -29,6 +27,10 @@ OptionParser.parse do |parser|
     exit
   end
 
+  parser.on("--board-theme=COLOR", "Set the board theme") do |color|
+    options["theme"] = color
+  end
+
   parser.invalid_option do |flag|
     STDERR.puts "ERROR: #{flag} is not a valid option."
     STDERR.puts parser
@@ -37,12 +39,23 @@ OptionParser.parse do |parser|
 end
 
 log = [] of String
-fen = LxChess::Fen.parse(options["fen_string"])
+fen = LxChess::Fen.parse(options["fen_string"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 player_white = LxChess::Player.new
 player_black = LxChess::Player.new
 game = LxChess::Game.new(board: fen.board, players: [player_white, player_black])
 gb = LxChess::TermBoard.new(game.board)
+if theme = options["theme"]?
+  if LxChess::TermBoard::THEMES[theme]?
+    gb.board_theme = theme
+  else
+    STDERR.puts "No theme #{theme}"
+    exit 1
+  end
+end
 term = LxChess::Terminal.new
+
+term.clear
+term.clear_scroll
 
 loop do
   term.move 0, 0
@@ -61,7 +74,21 @@ loop do
   term.trunc
   input = gets
   case input
-  when /moves/
+  when /moves\s+([a-z]\d)/i
+    next unless input
+    if matches = input.match(/[a-z]\d/i)
+      if square = matches[0]?
+        if index = game.board.index(square)
+          if set = game.moves(index)
+            gb.highlight(set.moves, "blue")
+            from = "#{set.piece.fen_symbol}#{game.board.cord(index)}: "
+            to = set.moves.map { |m| game.board.cord(m) }.join(", ")
+            log.unshift from + to
+          end
+        end
+      end
+    end
+  when /moves/i
     pieces = game.board.select do |piece|
       next if piece.nil?
       game.turn == 0 ? piece.white? : piece.black?
@@ -75,7 +102,7 @@ loop do
     move_string = move_sets.map do |set|
       next unless set
       next if set.moves.empty?
-      gb.highlight(set.moves, :blue)
+      gb.highlight(set.moves, "blue")
       from = "#{set.piece.fen_symbol}#{game.board.cord(set.origin)}: "
       to = set.moves.map { |m| game.board.cord(m) }.join(", ")
       from + to

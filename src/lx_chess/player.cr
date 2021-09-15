@@ -1,7 +1,11 @@
 module LxChess
-  property castle_left = true
-  property castle_right = true
-
   class Player
+    property castle_left : Bool = true
+    property castle_right : Bool = true
+
+    def no_castling!
+      @castle_right = false
+      @castle_left = false
+    end
   end
 end

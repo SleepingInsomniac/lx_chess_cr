@@ -20,6 +20,10 @@ module LxChess
     def initialize(@board : Board = Board.new, @players = [] of Player)
     end
 
+    def current_player
+      @players[@turn]
+    end
+
     def en_passant_target=(cord : String)
       @en_passant_target = @board.index(cord)
     end
@@ -28,10 +32,39 @@ module LxChess
       (@move_clock / 2).to_i16
     end
 
+    def own_king
+      @board.find do |piece|
+        next unless piece
+        piece.king? && (@turn == 0 ? piece.white? : piece.black?)
+      end
+    end
+
     # Parse standard algebraic notation
     def parse_san(notation : Notation)
       index = @board.index(notation.square)
+
+      if notation.castles?
+        raise "expected to find a king, but couldn't!" unless king = own_king
+
+        if king_index = king.index
+          if notation.castles_k
+            index = (king_index + 2)
+          else
+            index = (king_index - 2)
+          end
+        end
+
+        if index
+          notation.square = @board.cord(index)
+        end
+      end
+
+      if index
+        puts @board.cord(index)
+      end
+
       fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
+
       pieces = @board.select do |piece|
         next if piece.nil?
         next unless piece.fen_symbol == fen_symbol
@@ -46,7 +79,7 @@ module LxChess
         # from, to
         [piece.index.as(Int16), index.as(Int16)]
       else
-        raise SanError.new("no moves for #{notation.to_s}")
+        raise SanError.new("no pieces can move to #{notation.square}")
       end
     end
 
@@ -93,7 +126,6 @@ module LxChess
     end
 
     # Generate the psuedo-legal moves for a given *square*
-    # TODO: remove illegal moves
     def moves(square : (String | Int))
       if piece = @board[square]
         raise "Expected piece at #{square} to have an index, but it was nil" unless piece.index
@@ -101,13 +133,13 @@ module LxChess
         index = piece.index.as(Int16)
         case piece.fen_symbol
         when 'P' # White pawn
-          set.add_vector(x: 0, y: 1, limit: (@board.rank(index) == 1 ? 2 : 1).to_i16)
+          set.add_vector(x: 0, y: 1, limit: (@board.rank(index) == 1 ? 2 : 1).to_i16, captures: false)
           capture_left = @board.rel_index(index, x: -1, y: 1)
           capture_right = @board.rel_index(index, x: 1, y: 1)
           set.add_vector(x: -1, y: 1, limit: 1) if @board[capture_left] || capture_left == @en_passant_target
           set.add_vector(x: 1, y: 1, limit: 1) if @board[capture_right] || capture_right == @en_passant_target
         when 'p' # Black pawn
-          set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16)
+          set.add_vector(x: 0, y: -1, limit: (@board.rank(index) == @board.height - 2 ? 2 : 1).to_i16, captures: false)
           capture_left = @board.rel_index(index, x: -1, y: -1)
           capture_right = @board.rel_index(index, x: 1, y: -1)
           set.add_vector(x: -1, y: -1, limit: 1) if @board[capture_left] || capture_left == @en_passant_target
@@ -149,9 +181,32 @@ module LxChess
             {x: 0, y: -1},  # down
             {x: -1, y: -1}, # down left
           ])
+          # TODO: castling
+          if can_castle_right?(piece)
+            set.add_offset(x: 2, y: 0)
+          end
+          if can_castle_left?(piece)
+            set.add_offset(x: -2, y: 0)
+          end
         end
         set
       end
+    end
+
+    def can_castle_right?(piece)
+      player = piece.white? ? @players[0] : @players[1]
+      return false unless player.castle_right
+      return false unless index = piece.index
+      # TODO: figure out if castling crosses checks
+      @board[index + 1].nil? && @board[index + 2].nil?
+    end
+
+    def can_castle_left?(piece)
+      player = piece.white? ? @players[0] : @players[1]
+      return false unless player.castle_left
+      return false unless index = piece.index
+      # TODO: figure out if castling crosses checks
+      @board[index - 1].nil? && @board[index - 2].nil?
     end
 
     def make_move(from : String, to : String, promotion : Char? = nil)
@@ -167,6 +222,31 @@ module LxChess
       end
 
       san = move_to_san(from, to, promotion)
+      # Castling
+      if piece.king?
+        dist = to - from
+        if dist.abs == 2
+          current_player.no_castling!
+
+          if dist.positive?
+            san.castles_k = true
+            rook = @board.find do |p|
+              p && p.color == piece.color && p.rook? && p.index.as(Int16) > piece.index.as(Int16)
+            end
+            if rook
+              @board.move(from: rook.index.as(Int16), to: to - 1)
+            end
+          else
+            san.castles_q = true
+            rook = @board.find do |p|
+              p && p.color == piece.color && p.rook? && p.index.as(Int16) < piece.index.as(Int16)
+            end
+            if rook
+              @board.move(from: rook.index.as(Int16), to: to + 1)
+            end
+          end
+        end
+      end
 
       # Reset the 50 move rule for captures and pawn moves
       if piece.pawn? || !@board[to].nil?
@@ -180,9 +260,13 @@ module LxChess
         distance = from - to
         if distance.abs == @board.width * 2
           @en_passant_target = distance > 0 ? to + @board.width : to - @board.width
-        elsif to == @en_passant_target
-          capture = distance > 0 ? to + @board.width : to - @board.width
-          @board[capture] = nil
+        else
+          if to == @en_passant_target
+            capture = distance > 0 ? to + @board.width : to - @board.width
+            @board[capture] = nil
+          end
+
+          @en_passant_target = nil
         end
       end
 

@@ -52,5 +52,13 @@ module LxChess
     def pawn?
       @id & 0b0111 == PAWN
     end
+
+    def king?
+      @id & 0b0111 == KING
+    end
+
+    def rook?
+      @id & 0b0111 == ROOK
+    end
   end
 end

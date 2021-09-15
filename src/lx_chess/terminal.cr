@@ -39,5 +39,13 @@ module LxChess
     def trunc
       @io.print "\033[K"
     end
+
+    def clear
+      @io.print "\033[2J"
+    end
+
+    def clear_scroll
+      @io.print "\033[3J"
+    end
   end
 end

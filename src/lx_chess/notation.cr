@@ -137,7 +137,7 @@ module LxChess
     end
 
     def fen_symbol(turn)
-      pa = @piece_abbr || 'p'
+      pa = (castles? ? 'k' : @piece_abbr) || 'p'
       turn == "w" ? pa.upcase : pa.downcase
     end
 
@@ -166,12 +166,29 @@ module LxChess
       end
 
       buffer << 'x' if @takes
-      buffer << @square
+      buffer << @square unless castles?
       buffer << '+' if @check
       buffer << '#' if @checkmate
       buffer << " e.p." if @en_passant
       buffer << '=' << @promotion if @promotion
       buffer.to_s
+    end
+
+    def to_h
+      {
+        "square"     => square,
+        "castles_k"  => castles_k?,
+        "castles_q"  => castles_q?,
+        "en_passant" => en_passant?,
+        "check"      => check?,
+        "checkmate"  => checkmate?,
+        "takes"      => takes?,
+        "piece_abbr" => piece_abbr,
+        "origin"     => origin,
+        "promotion"  => promotion,
+        "from"       => from,
+        "to"         => to,
+      }
     end
   end
 end

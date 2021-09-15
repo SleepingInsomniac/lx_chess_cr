@@ -15,7 +15,7 @@ module LxChess
       @piece.index.as(Int16)
     end
 
-    def add_vector(x : Int16, y : Int16, limit : Int16)
+    def add_vector(x : Int16, y : Int16, limit : Int16, captures : Bool = true)
       dist_edge = @board.dist_left(origin) if x.negative?
       dist_edge = @board.dist_right(origin) if x.positive?
       limit = dist_edge if dist_edge && dist_edge < limit
@@ -23,7 +23,7 @@ module LxChess
       offset = y * @board.width + x
       step = offset
       limit.times do
-        info = add_offset(offset)
+        info = add_offset(offset, captures)
         offset += step
         break if info[:stop]
       end
@@ -44,7 +44,7 @@ module LxChess
     end
 
     # Does not check for crossing border edges
-    def add_offset(offset : Int16)
+    def add_offset(offset : Int16, captures : Bool = true)
       added = false; stop = false
       location = origin + offset
       if location < 0 || location >= @board.squares.size
@@ -52,7 +52,7 @@ module LxChess
         stop = true
       else
         if capture = @board[location]
-          unless capture.color == @piece.color
+          if captures && capture.color != @piece.color
             @moves.push(location)
             added = true
           end
