@@ -194,17 +194,21 @@ module LxChess
     end
 
     def can_castle_right?(piece)
+      return false if @players.empty?
       player = piece.white? ? @players[0] : @players[1]
       return false unless player.castle_right
       return false unless index = piece.index
+      return false unless @board.border_right(index) >= 2
       # TODO: figure out if castling crosses checks
       @board[index + 1].nil? && @board[index + 2].nil?
     end
 
     def can_castle_left?(piece)
+      return false if @players.empty?
       player = piece.white? ? @players[0] : @players[1]
       return false unless player.castle_left
       return false unless index = piece.index
+      return false unless @board.border_left(index) <= 2
       # TODO: figure out if castling crosses checks
       @board[index - 1].nil? && @board[index - 2].nil?
     end
