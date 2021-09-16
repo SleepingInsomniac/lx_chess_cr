@@ -59,7 +59,7 @@ term.clear_scroll
 
 loop do
   term.move 0, 0
-  print fen.placement
+  print fen.to_s
   term.trunc
   puts
   puts
@@ -137,6 +137,8 @@ loop do
       end
     end
   end
+
+  fen.update(game)
 rescue e : LxChess::Notation::InvalidNotation | LxChess::Game::SanError | LxChess::Game::IllegalMove
   if msg = e.message
     log.unshift msg

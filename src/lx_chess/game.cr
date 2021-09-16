@@ -20,6 +20,16 @@ module LxChess
     def initialize(@board : Board = Board.new, @players = [] of Player)
     end
 
+    def castling
+      io = IO::Memory.new
+      @players.map_with_index do |p, i|
+        io << (i == 0 ? 'K' : 'k') if p.castle_king
+        io << (i == 0 ? 'Q' : 'q') if p.castle_queen
+      end
+      c_stirng = io.to_s
+      c_stirng.size == 0 ? "-" : c_stirng
+    end
+
     def current_player
       @players[@turn]
     end
@@ -57,10 +67,6 @@ module LxChess
         if index
           notation.square = @board.cord(index)
         end
-      end
-
-      if index
-        puts @board.cord(index)
       end
 
       fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
@@ -182,10 +188,10 @@ module LxChess
             {x: -1, y: -1}, # down left
           ])
           # TODO: castling
-          if can_castle_right?(piece)
+          if can_castle_king?(piece)
             set.add_offset(x: 2, y: 0)
           end
-          if can_castle_left?(piece)
+          if can_castle_queen?(piece)
             set.add_offset(x: -2, y: 0)
           end
         end
@@ -193,20 +199,20 @@ module LxChess
       end
     end
 
-    def can_castle_right?(piece)
+    def can_castle_king?(piece)
       return false if @players.empty?
       player = piece.white? ? @players[0] : @players[1]
-      return false unless player.castle_right
+      return false unless player.castle_king
       return false unless index = piece.index
       return false unless @board.border_right(index) >= 2
       # TODO: figure out if castling crosses checks
       @board[index + 1].nil? && @board[index + 2].nil?
     end
 
-    def can_castle_left?(piece)
+    def can_castle_queen?(piece)
       return false if @players.empty?
       player = piece.white? ? @players[0] : @players[1]
-      return false unless player.castle_left
+      return false unless player.castle_queen
       return false unless index = piece.index
       return false unless @board.border_left(index) <= 2
       # TODO: figure out if castling crosses checks
@@ -272,6 +278,8 @@ module LxChess
 
           @en_passant_target = nil
         end
+      else
+        @en_passant_target = nil
       end
 
       @board.move(from, to)

@@ -18,7 +18,7 @@ module LxChess
         turn: turn,
         castling: castling,
         en_passant: en_passant,
-        halfmove_clock: halfmove_clock.to_i16,
+        halfmove_clock: halfmove_clock.to_i8,
         fullmove_counter: fullmove_counter.to_i16
       )
     end
@@ -60,17 +60,29 @@ module LxChess
     property turn : String
     property castling : String
     property en_passant : String
-    property halfmove_clock : Int16
+    property halfmove_clock : Int8
     property fullmove_counter : Int16
 
     def initialize(
-      @board : Board,
-      @turn : String,
-      @castling : String,
-      @en_passant : String,
-      @halfmove_clock : Int16,
-      @fullmove_counter : Int16
+      @board,
+      @turn,
+      @castling,
+      @en_passant,
+      @halfmove_clock,
+      @fullmove_counter
     )
+    end
+
+    def update(game : Game)
+      if index = game.en_passant_target
+        @en_passant = @board.cord(index)
+      else
+        @en_passant = "-"
+      end
+
+      @castling = game.castling
+      @halfmove_clock = game.fifty_move_rule
+      @fullmove_counter = game.full_moves + 1
     end
 
     def placement
@@ -78,6 +90,10 @@ module LxChess
         .each_slice(@board.width)
         .map { |row| row.chunks { |r| r.nil? }.map { |chunked, values| chunked ? values.size : values.join }.join }
         .to_a.reverse.join('/')
+    end
+
+    def to_s
+      [placement, @turn, @castling, @en_passant, @halfmove_clock, @fullmove_counter].join(' ')
     end
   end
 end
