@@ -61,11 +61,13 @@ loop do
   term.move 0, 0
   print fen.to_s
   term.trunc
-  puts
-  puts
+  term.move x: 0, y: 3
   gb.draw
-  puts
-  puts
+  game.pgn.history.each_with_index do |san, i|
+    term.move game.board.width * 2 + 10, y: 3 + i
+    print san.to_s
+  end
+  term.move x: 0, y: game.board.height + 5
   if game.turn == 0
     print " #{game.full_moves + 1}. "
   else

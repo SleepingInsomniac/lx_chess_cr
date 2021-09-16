@@ -23,16 +23,19 @@ module LxChess
       screen_size
     end
 
+    @x : Int16
+    @y : Int16
+
     def initialize(@io = STDOUT)
       @x = 0
       @y = 0
     end
 
     # Move cursor to line, column
-    def move(x, y)
-      @x = x
-      @y = y
-      @io.print "\033[#{@x};#{@y}H"
+    def move(x : Int, y : Int)
+      @x = x.to_i16
+      @y = y.to_i16
+      @io.print "\033[#{@y};#{@x}H"
     end
 
     # Delete the rest of the line from cursor pos

@@ -3,6 +3,7 @@ require "./board"
 require "./notation"
 require "./move_set"
 require "./error"
+require "./pgn"
 
 module LxChess
   # Represents a standard game of Chess
@@ -16,6 +17,7 @@ module LxChess
     property move_clock : Int16 = 0
     property en_passant_target : Int16?
     property fifty_move_rule : Int8 = 0
+    property pgn : PGN = PGN.new
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
     end
@@ -284,6 +286,7 @@ module LxChess
 
       @board.move(from, to)
       next_turn
+      @pgn.history << san
       san
     end
 
