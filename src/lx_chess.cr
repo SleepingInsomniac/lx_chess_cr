@@ -63,10 +63,12 @@ loop do
   term.trunc
   term.move x: 0, y: 3
   gb.draw
-  game.pgn.history.each_with_index do |san, i|
+
+  game.pgn.strings.each_with_index do |m, i|
     term.move game.board.width * 2 + 10, y: 3 + i
-    print san.to_s
+    print m
   end
+
   term.move x: 0, y: game.board.height + 5
   if game.turn == 0
     print " #{game.full_moves + 1}. "

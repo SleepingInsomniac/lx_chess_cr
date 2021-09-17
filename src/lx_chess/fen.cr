@@ -25,7 +25,10 @@ module LxChess
 
     def self.parse_placement(placement)
       ranks = placement.split('/')
-      width = ranks.reduce(0) { |max, rank| rank.size > max ? rank.size : max }
+      width = ranks.reduce(0) do |max, rank|
+        w = rank.chars.map { |s| s.number? ? s.to_i : 1 }.reduce(0) { |t, n| t + n }
+        w > max ? w : max
+      end
       height = ranks.size
       rank = height - 1
 
@@ -80,6 +83,7 @@ module LxChess
         @en_passant = "-"
       end
 
+      @turn = game.turn == 0 ? "w" : "b"
       @castling = game.castling
       @halfmove_clock = game.fifty_move_rule
       @fullmove_counter = game.full_moves + 1

@@ -237,9 +237,9 @@ module LxChess
       # Castling
       if piece.king?
         dist = to - from
-        if dist.abs == 2
-          current_player.no_castling!
+        current_player.no_castling!
 
+        if dist.abs == 2
           if dist.positive?
             san.castles_k = true
             rook = @board.find do |p|
@@ -256,6 +256,30 @@ module LxChess
             if rook
               @board.move(from: rook.index.as(Int16), to: to + 1)
             end
+          end
+        end
+      end
+
+      if piece.rook?
+        king_index = own_king.try { |k| k.index } || 0
+        piece_index = piece.index
+
+        if piece_index > king_index
+          current_player.castle_king = false
+        else
+          current_player.castle_queen = false
+        end
+      end
+
+      if capture = @board[to]
+        if capture.rook?
+          king_index = own_king.try { |k| k.index } || 0
+          capture_index = capture.index
+
+          if capture_index > king_index
+            current_player.castle_king = false
+          else
+            current_player.castle_queen = false
           end
         end
       end

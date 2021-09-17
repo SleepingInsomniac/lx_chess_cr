@@ -5,14 +5,6 @@ require "../../src/lx_chess/move_set"
 require "../../src/lx_chess/game"
 require "../../src/lx_chess/term_board"
 
-def debug_board(game : LxChess::Game, moves : Array(Int16))
-  puts
-  gb = LxChess::TermBoard.new(game.board)
-  gb.highlight(moves)
-  gb.draw
-  puts
-end
-
 describe LxChess::Game do
   describe "#moves" do
     it "correctly generates white pawn moves from the initial rank" do

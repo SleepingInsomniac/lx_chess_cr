@@ -16,7 +16,7 @@ module LxChess
       Piece.new(id)
     end
 
-    property index : (Nil | Int16)
+    property index : Int16 = -1
 
     def initialize(@id : Int8 = 0)
     end
