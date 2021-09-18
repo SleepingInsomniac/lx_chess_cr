@@ -44,6 +44,7 @@ player_white = LxChess::Player.new
 player_black = LxChess::Player.new
 game = LxChess::Game.new(board: fen.board, players: [player_white, player_black])
 gb = LxChess::TermBoard.new(game.board)
+
 if theme = options["theme"]?
   if LxChess::TermBoard::THEMES[theme]?
     gb.board_theme = theme

@@ -44,11 +44,17 @@ module LxChess
       (@move_clock / 2).to_i16
     end
 
+    # Return the current player's king
     def own_king
       @board.find do |piece|
         next unless piece
         piece.king? && (@turn == 0 ? piece.white? : piece.black?)
       end
+    end
+
+    # Parse SAN from a string
+    def parse_san(notation : String)
+      parse_san(Notation.new(notation))
     end
 
     # Parse standard algebraic notation

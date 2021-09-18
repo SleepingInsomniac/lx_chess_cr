@@ -19,6 +19,6 @@ end
 
 def place(board : LxChess::Board, squares : Hash(String, Char))
   squares.each do |cord, sym|
-    game.board[cord] = LxChess::Piece.from_fen(sym)
+    board[cord] = LxChess::Piece.from_fen(sym)
   end
 end
