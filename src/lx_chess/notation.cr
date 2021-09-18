@@ -10,18 +10,20 @@ module LxChess
 
     class InvalidMove < Error; end
 
-    NOTATION_REGEX = %r{\A\s*
-      (^[O0]-[O0])?\s*                           # 1.  castles kingside
-      (^[O0]-[O0]-[O0])?\s*                      # 2.  castles queenside
-      (^[RNBQKP](?!\d$))?\s*                     # 3.  piece abbreviation
-      ((?:[a-z]|\d|[a-z]\d)(?=.*?[a-z]\d))?\s*   # 4.  origin square
-      (x)?\s*                                    # 5.  takes
-      ([a-z]\d)?\s*                              # 6.  destination square
-      (\=\s*[RNBQ])?\s*                          # 7.  promotion
-      (\+)?\s*                                   # 8.  check
-      (\#)?\s*                                   # 9.  checkmate
-      (e\.?p\.?)?\s*                             # 10. en passant
-    \z}x
+    NOTATION_REGEX = %r{
+      \A\s*
+      (?<castle_k>   ^[Oo0]-[Oo0]                                 )?\s*
+      (?<castle_q>   ^[Oo0]-[Oo0]-[Oo0]                           )?\s*
+      (?<piece_abbr> ^[RNBQKP](?!\d$)                             )?\s*
+      (?<origin>     (?:[a-wyz]|\d+|[a-z]\d+)(?=\s*x?\s*[a-z]\d+) )?\s*
+      (?<takes>      x                                            )?\s*
+      (?<dest>       [a-z]\d+                                     )?\s*
+      (?<promo>      \=\s*[RNBQrnbq]                              )?\s*
+      (?<check>      \+                                           )?\s*
+      (?<checkmate>  \#                                           )?\s*
+      (?<en_passent> e\.?p\.?                                     )?\s*
+      \z
+    }x
 
     @match : Regex::MatchData?
 
@@ -47,23 +49,23 @@ module LxChess
         @square = _square.downcase
       end
 
-      @castles_k = match[1]? ? true : false
-      @castles_q = match[2]? ? true : false
-      @en_passant = match[10]? ? true : false
-      @check = match[8]? ? true : false
-      @checkmate = match[9]? ? true : false
-      @takes = match[5]? ? true : false
+      @castles_k = match["castle_k"]? ? true : false
+      @castles_q = match["castle_q"]? ? true : false
+      @en_passant = match["en_passant"]? ? true : false
+      @check = match["check"]? ? true : false
+      @checkmate = match["checkmate"]? ? true : false
+      @takes = match["takes"]? ? true : false
 
-      if _piece_abbr = match[3]?
-        @piece_abbr = _piece_abbr[0].upcase
+      match["piece_abbr"]?.try do |abbr|
+        @piece_abbr = abbr[0].upcase
       end
 
-      if _origin = match[4]?
-        @origin = _origin.downcase
+      match["origin"]?.try do |origin|
+        @origin = origin.downcase
       end
 
-      if _promo = match[7]?
-        @promotion = _promo[-1].upcase
+      match["promo"]?.try do |promo|
+        @promotion = promo[-1].upcase
       end
 
       @from = nil
