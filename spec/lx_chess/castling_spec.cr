@@ -23,10 +23,32 @@ describe "Castling" do
       fen = Fen.parse("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
       game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
-      game.make_move(from: "e1", to: "c11")
+      game.make_move(from: "e1", to: "c1")
       debug_board(game, ["e1", "c1"])
       fen.update(game)
       fen.to_s.should eq("8/8/8/8/8/8/8/2KR3R b kq - 1 1")
+    end
+  end
+
+  describe "black" do
+    it "moves the king and the rook when castling kingside" do
+      fen = Fen.parse("r3k2r/8/8/8/8/8/8/8 w KQkq - 0 1")
+      game = Game.new(board: fen.board, players: [Player.new, Player.new])
+
+      game.make_move(from: "e8", to: "g8")
+      debug_board(game, ["e8", "g8"])
+      fen.update(game)
+      fen.to_s.should eq("r4rk1/8/8/8/8/8/8/8 b kq - 1 1")
+    end
+
+    it "moves the king and the rook when castling queenside" do
+      fen = Fen.parse("r3k2r/8/8/8/8/8/8/8 w KQkq - 0 1")
+      game = Game.new(board: fen.board, players: [Player.new, Player.new])
+
+      game.make_move(from: "e8", to: "c8")
+      debug_board(game, ["e8", "c8"])
+      fen.update(game)
+      fen.to_s.should eq("2kr3r/8/8/8/8/8/8/8 b kq - 1 1")
     end
   end
 end

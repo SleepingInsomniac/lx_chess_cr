@@ -206,7 +206,7 @@ module LxChess
       player = piece.white? ? @players[0] : @players[1]
       return false unless player.castle_king
       return false unless index = piece.index
-      return false unless @board.border_right(index) >= 2
+      return false unless (index - @board.border_left(index)).abs >= 2
       # TODO: figure out if castling crosses checks
       @board[index + 1].nil? && @board[index + 2].nil?
     end
@@ -216,7 +216,7 @@ module LxChess
       player = piece.white? ? @players[0] : @players[1]
       return false unless player.castle_queen
       return false unless index = piece.index
-      return false unless @board.border_left(index) <= 2
+      return false unless (index - @board.border_left(index)).abs >= 2
       # TODO: figure out if castling crosses checks
       @board[index - 1].nil? && @board[index - 2].nil?
     end
