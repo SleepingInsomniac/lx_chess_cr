@@ -51,4 +51,27 @@ describe "Castling" do
       fen.to_s.should eq("2kr3r/8/8/8/8/8/8/8 b kq - 1 1")
     end
   end
+
+  it "castles from non-standard positions" do
+    # For non-standard chess games
+    fen = Fen.parse("8/8/8/8/8/8/8/R1K4R w KQkq - 0 1")
+    game = Game.new(board: fen.board, players: [Player.new, Player.new])
+
+    game.make_move(from: "c1", to: "e1")
+    debug_board(game, ["c1", "e1"])
+    fen.update(game)
+    fen.to_s.should eq("8/8/8/8/8/8/8/R2RK3 b kq - 1 1")
+  end
+
+  it "does not allow castling after the king has moved" do
+    fen = Fen.parse("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+    game = Game.new(board: fen.board, players: [Player.new, Player.new])
+    game.make_move(from: "e1", to: "d1")
+    fen.update(game)
+    fen.to_s.should eq("8/8/8/8/8/8/8/R2K3R b kq - 1 1")
+    game.next_turn
+    expect_raises(Game::IllegalMove) do
+      game.make_move(from: "d1", to: "f1")
+    end
+  end
 end
