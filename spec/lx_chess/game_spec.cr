@@ -6,6 +6,24 @@ require "../../src/lx_chess/game"
 require "../../src/lx_chess/term_board"
 
 describe LxChess::Game do
+  describe "#find_king" do
+    it "finds the black king" do
+      game = LxChess::Game.new
+      place(game.board, { "e1" => 'K', "e8" => 'k' })
+      black_king = game.find_king(1)
+      black_king.should_not be(nil)
+      black_king.try { |k| k.fen_symbol.should eq('k') }
+    end
+
+    it "finds the white king" do
+      game = LxChess::Game.new
+      place(game.board, { "e1" => 'K', "e8" => 'k' })
+      white_king = game.find_king(0)
+      white_king.should_not be(nil)
+      white_king.try { |k| k.fen_symbol.should eq('K') }
+    end
+  end
+
   describe "#moves" do
     it "correctly generates white pawn moves from the initial rank" do
       game = LxChess::Game.new

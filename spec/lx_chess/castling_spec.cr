@@ -69,7 +69,7 @@ describe "Castling" do
     game.make_move(from: "e1", to: "d1")
     fen.update(game)
     fen.to_s.should eq("8/8/8/8/8/8/8/R2K3R b kq - 1 1")
-    game.next_turn
+    game.next_turn!
     expect_raises(Game::IllegalMove) do
       game.make_move(from: "d1", to: "f1")
     end

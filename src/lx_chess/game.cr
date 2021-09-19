@@ -52,6 +52,13 @@ module LxChess
       end
     end
 
+    def find_king(turn = @turn)
+      @board.find do |piece|
+        next unless piece
+        piece.king? && (turn == 0 ? piece.white? : piece.black?)
+      end
+    end
+
     # Parse SAN from a string
     def parse_san(notation : String)
       parse_san(Notation.new(notation))
@@ -97,10 +104,14 @@ module LxChess
       end
     end
 
-    # TODO: add check, checkmate, etc.
-    def move_to_san(from : Int, to : Int, promotion : String? = nil)
+    # TODO: checkmate
+    def move_to_san(from : Int, to : Int, promotion : String? = nil, turn = @turn)
       raise "No piece at #{@board.cord(from)}" unless piece = @board[from]
       en_passant = piece.pawn? && to == @en_passant_target
+
+      check = tmp_move(from, to) do
+        in_check?(turn)
+      end
 
       Notation.new(
         square: @board.cord(to),
@@ -109,7 +120,8 @@ module LxChess
         from: @board.cord(from),
         to: @board.cord(to),
         takes: en_passant || !@board[to].nil?,
-        en_passant: en_passant
+        en_passant: en_passant,
+        check: check
       )
     end
 
@@ -227,6 +239,19 @@ module LxChess
       @board[index - 1].nil? && @board[index - 2].nil?
     end
 
+    # Temporarily make a move
+    def tmp_move(from : Int16, to : Int16)
+      from_piece = @board[from]
+      to_piece = @board[to]
+      @board[from] = nil
+      @board[to] = from_piece
+      return_val = yield
+    ensure
+      @board[from] = from_piece
+      @board[to] = to_piece
+      return_val
+    end
+
     def make_move(from : String, to : String, promotion : Char? = nil)
       make_move(from: @board.index(from), to: @board.index(to), promotion: promotion)
     end
@@ -239,7 +264,15 @@ module LxChess
         raise IllegalMove.new("#{@board.cord(from)} has no moves")
       end
 
-      san = move_to_san(from, to, promotion)
+      # Test if the move will expose check
+      tmp_move(from, to) do
+        if in_check?
+          raise IllegalMove.new("Cannot move into check")
+        end
+      end
+
+      san = move_to_san(from, to, promotion, next_turn)
+
       # Castling
       if piece.king?
         dist = to - from
@@ -315,15 +348,46 @@ module LxChess
       end
 
       @board.move(from, to)
-      next_turn
+      next_turn!
       @pgn.history << san
       san
     end
 
-    def next_turn
-      @turn += 1
-      @turn = @turn % @players.size
+    def in_check?(turn = @turn)
+      if king = find_king(turn)
+        opponent_pieces = @board.select do |square|
+          square.try do |piece|
+            piece.color != king.color
+          end
+        end
+
+        in_check = false
+        moves = opponent_pieces.each do |piece|
+          piece.try do |piece|
+            moves(piece.index).try do |move_set|
+              if move_set.moves.includes?(king.index)
+                in_check = true
+                break
+              end
+            end
+          end
+        end
+
+        in_check
+      else
+        false
+      end
+    end
+
+    # Increment the turn index
+    def next_turn!
+      @turn = next_turn
       @move_clock += 1
+    end
+
+    # Get the next turn index
+    def next_turn
+      (@turn + 1) % @players.size
     end
   end
 end
