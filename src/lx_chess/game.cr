@@ -44,14 +44,7 @@ module LxChess
       (@move_clock / 2).to_i16
     end
 
-    # Return the current player's king
-    def own_king
-      @board.find do |piece|
-        next unless piece
-        piece.king? && (@turn == 0 ? piece.white? : piece.black?)
-      end
-    end
-
+    # Find the king, optionally specifying *turn*
     def find_king(turn = @turn)
       @board.find do |piece|
         next unless piece
@@ -69,7 +62,7 @@ module LxChess
       index = @board.index(notation.square)
 
       if notation.castles?
-        raise "expected to find a king, but couldn't!" unless king = own_king
+        raise "expected to find a king, but couldn't!" unless king = find_king
 
         if king_index = king.index
           if notation.castles_k
@@ -300,7 +293,7 @@ module LxChess
       end
 
       if piece.rook?
-        king_index = own_king.try { |k| k.index } || 0
+        king_index = find_king.try { |k| k.index } || 0
         piece_index = piece.index
 
         if piece_index > king_index
@@ -312,7 +305,7 @@ module LxChess
 
       if capture = @board[to]
         if capture.rook?
-          king_index = own_king.try { |k| k.index } || 0
+          king_index = find_king.try { |k| k.index } || 0
           capture_index = capture.index
 
           if capture_index > king_index
