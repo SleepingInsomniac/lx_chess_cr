@@ -48,7 +48,7 @@ module LxChess
       castling = fen.castling
       en_passant_target = fen.en_passant
       @fifty_move_rule = fen.halfmove_clock
-      @move_clock = fen.fullmove_counter * 2
+      @move_clock = (fen.fullmove_counter - 1) * 2
       @move_clock += 1 if fen.turn == "b"
     end
 
