@@ -5,6 +5,7 @@ require "./terminal"
 require "./term_board"
 
 module LxChess
+  # Represents a chess game played through the terminal
   class TermGame
     property gb : TermBoard
     getter log
@@ -16,6 +17,11 @@ module LxChess
       @gb = TermBoard.new(@game.board)
       @log = [] of String
       clear_screen
+    end
+
+    def tick
+      draw
+      update
     end
 
     def update
@@ -102,11 +108,6 @@ module LxChess
       draw_pgn
       draw_log
       draw_prompt
-    end
-
-    def tick
-      draw
-      update
     end
 
     # ===================
