@@ -4,6 +4,7 @@ require "./notation"
 require "./move_set"
 require "./error"
 require "./pgn"
+require "./fen"
 
 module LxChess
   # Represents a standard game of Chess
@@ -30,6 +31,33 @@ module LxChess
       end
       c_stirng = io.to_s
       c_stirng.size == 0 ? "-" : c_stirng
+    end
+
+    def castling=(string : String)
+      chars = string.chars
+      return false unless @players.size == 2
+      player_white, player_black = @players
+      player_white.castle_king = chars.includes?('k')
+      player_white.castle_queen = chars.includes?('q')
+      player_black.castle_king = chars.includes?('K')
+      player_black.castle_queen = chars.includes?('Q')
+    end
+
+    def set_fen_attributes(fen : Fen)
+      @turn = (fen.turn == "w" ? 0 : 1).to_i8
+      castling = fen.castling
+      en_passant_target = fen.en_passant
+      @fifty_move_rule = fen.halfmove_clock
+      @move_clock = fen.fullmove_counter * 2
+      @move_clock += 1 if fen.turn == "b"
+    end
+
+    def en_passant_target=(cord : String)
+      if cord =~ /[a-z]+\d+/
+        @en_passant_target = @board.index(cord)
+      else
+        @en_passant_target = nil
+      end
     end
 
     def current_player

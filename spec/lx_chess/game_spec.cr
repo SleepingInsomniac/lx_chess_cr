@@ -4,11 +4,27 @@ require "../../src/lx_chess/piece"
 require "../../src/lx_chess/move_set"
 require "../../src/lx_chess/game"
 require "../../src/lx_chess/term_board"
+require "../../src/lx_chess/player"
 
-describe LxChess::Game do
+include LxChess
+
+describe Game do
+  describe "#castling=" do
+    it "sets the castling from a string" do
+      player_white = Player.new
+      player_black = Player.new
+      game = Game.new(players: [player_white, player_black])
+      game.castling = "kQ"
+      player_white.castle_king.should be_true
+      player_white.castle_queen.should be_false
+      player_black.castle_king.should be_false
+      player_black.castle_queen.should be_true
+    end
+  end
+
   describe "#find_king" do
     it "finds the black king" do
-      game = LxChess::Game.new
+      game = Game.new
       place(game.board, { "e1" => 'K', "e8" => 'k' })
       black_king = game.find_king(1)
       black_king.should_not be(nil)
@@ -16,7 +32,7 @@ describe LxChess::Game do
     end
 
     it "finds the white king" do
-      game = LxChess::Game.new
+      game = Game.new
       place(game.board, { "e1" => 'K', "e8" => 'k' })
       white_king = game.find_king(0)
       white_king.should_not be(nil)
@@ -26,8 +42,8 @@ describe LxChess::Game do
 
   describe "#moves" do
     it "correctly generates white pawn moves from the initial rank" do
-      game = LxChess::Game.new
-      game.board["e2"] = LxChess::Piece.from_fen('P')
+      game = Game.new
+      game.board["e2"] = Piece.from_fen('P')
       if move_set = game.moves("e2")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e3 e4])
@@ -37,8 +53,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates black pawn moves from the initial rank" do
-      game = LxChess::Game.new
-      game.board["e7"] = LxChess::Piece.from_fen('p')
+      game = Game.new
+      game.board["e7"] = Piece.from_fen('p')
       if move_set = game.moves("e7")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e6 e5])
@@ -48,8 +64,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates single white pawn moves" do
-      game = LxChess::Game.new
-      game.board["e3"] = LxChess::Piece.from_fen('P')
+      game = Game.new
+      game.board["e3"] = Piece.from_fen('P')
       if move_set = game.moves("e3")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e4])
@@ -59,8 +75,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates black pawn moves" do
-      game = LxChess::Game.new
-      game.board["e6"] = LxChess::Piece.from_fen('p')
+      game = Game.new
+      game.board["e6"] = Piece.from_fen('p')
       if move_set = game.moves("e6")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
@@ -70,10 +86,10 @@ describe LxChess::Game do
     end
 
     it "generates captures for white pawns" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('P')
-      game.board["f5"] = LxChess::Piece.from_fen('p')
-      game.board["d5"] = LxChess::Piece.from_fen('p')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('P')
+      game.board["f5"] = Piece.from_fen('p')
+      game.board["d5"] = Piece.from_fen('p')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5 d5 f5])
@@ -83,10 +99,10 @@ describe LxChess::Game do
     end
 
     it "does not generates captures pawns capturing own pieces" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('P')
-      game.board["f5"] = LxChess::Piece.from_fen('P')
-      game.board["d5"] = LxChess::Piece.from_fen('P')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('P')
+      game.board["f5"] = Piece.from_fen('P')
+      game.board["d5"] = Piece.from_fen('P')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
@@ -96,9 +112,9 @@ describe LxChess::Game do
     end
 
     it "generates captures for en passant targets" do
-      game = LxChess::Game.new
-      game.board["e5"] = LxChess::Piece.from_fen('P')
-      game.board["d5"] = LxChess::Piece.from_fen('p')
+      game = Game.new
+      game.board["e5"] = Piece.from_fen('P')
+      game.board["d5"] = Piece.from_fen('p')
       game.en_passant_target = "d6"
       if move_set = game.moves("e5")
         debug_board(game, move_set.moves)
@@ -109,8 +125,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates knight moves" do
-      game = LxChess::Game.new
-      game.board["c3"] = LxChess::Piece.from_fen('N')
+      game = Game.new
+      game.board["c3"] = Piece.from_fen('N')
       if move_set = game.moves("c3")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[a4 b5 d5 e4 e2 d1 b1 a2])
@@ -120,8 +136,8 @@ describe LxChess::Game do
     end
 
     it "does not generate knight moves that cross the left border edge" do
-      game = LxChess::Game.new
-      game.board["a1"] = LxChess::Piece.from_fen('N')
+      game = Game.new
+      game.board["a1"] = Piece.from_fen('N')
       if move_set = game.moves("a1")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[b3 c2])
@@ -131,8 +147,8 @@ describe LxChess::Game do
     end
 
     it "does not generate knight moves that cross the right border edge" do
-      game = LxChess::Game.new
-      game.board["h1"] = LxChess::Piece.from_fen('N')
+      game = Game.new
+      game.board["h1"] = Piece.from_fen('N')
       if move_set = game.moves("h1")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[f2 g3])
@@ -142,8 +158,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates rook moves" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('R')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('R')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -158,8 +174,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates bishop moves" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('B')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('B')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -174,8 +190,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates king moves" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('K')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('K')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -187,8 +203,8 @@ describe LxChess::Game do
     end
 
     it "does not generate king moves crossing the right border" do
-      game = LxChess::Game.new
-      game.board["h4"] = LxChess::Piece.from_fen('K')
+      game = Game.new
+      game.board["h4"] = Piece.from_fen('K')
       if move_set = game.moves("h4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -200,8 +216,8 @@ describe LxChess::Game do
     end
 
     it "correctly generates queen moves" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('Q')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('Q')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -220,9 +236,9 @@ describe LxChess::Game do
     end
 
     it "blocks moves when a piece is in the way" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('B')
-      game.board["f5"] = LxChess::Piece.from_fen('P')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('B')
+      game.board["f5"] = Piece.from_fen('P')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
@@ -236,9 +252,9 @@ describe LxChess::Game do
     end
 
     it "adds captures before blocking further moves" do
-      game = LxChess::Game.new
-      game.board["e4"] = LxChess::Piece.from_fen('B')
-      game.board["f5"] = LxChess::Piece.from_fen('p')
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('B')
+      game.board["f5"] = Piece.from_fen('p')
       if move_set = game.moves("e4")
         debug_board(game, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[

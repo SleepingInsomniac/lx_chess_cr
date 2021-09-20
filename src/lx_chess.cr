@@ -40,9 +40,13 @@ end
 
 log = [] of String
 fen = LxChess::Fen.parse(options["fen_string"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+
 player_white = LxChess::Player.new
 player_black = LxChess::Player.new
+
 game = LxChess::Game.new(board: fen.board, players: [player_white, player_black])
+game.set_fen_attributes(fen)
+
 gb = LxChess::TermBoard.new(game.board)
 
 if theme = options["theme"]?

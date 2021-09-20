@@ -1,6 +1,7 @@
 require "./board"
 require "./piece"
 require "./error"
+require "./player"
 
 module LxChess
   # Forsyth-Edwards Notation parser and converter
