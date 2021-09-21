@@ -126,7 +126,7 @@ module LxChess
     end
 
     # TODO: checkmate
-    def move_to_san(from : Int, to : Int, promotion : String? = nil, turn = @turn)
+    def move_to_san(from : Int, to : Int, promotion : Char? = nil, turn = @turn)
       raise "No piece at #{@board.cord(from)}" unless piece = @board[from]
       en_passant = piece.pawn? && to == @en_passant_target
 
@@ -355,6 +355,7 @@ module LxChess
       if piece.pawn?
         distance = from - to
         if distance.abs == @board.width * 2
+          # Double pawn push, set en passant target
           @en_passant_target = distance > 0 ? to + @board.width : to - @board.width
         else
           if to == @en_passant_target
@@ -366,6 +367,22 @@ module LxChess
         end
       else
         @en_passant_target = nil
+      end
+
+      # Promotion
+      if piece.pawn?
+        rank = @board.rank(to)
+        if rank == 0 || rank == @board.height - 1
+          if promotion
+            raise IllegalMove.new("Cannot promote to #{promotion}") unless "RNBQ".chars.includes?(promotion.upcase)
+            promotion = piece.white? ? promotion.upcase : promotion.downcase
+            @board[from] = Piece.from_fen(promotion)
+          else
+            raise IllegalMove.new("Pawns must promote on the last rank")
+          end
+        elsif promotion
+          raise IllegalMove.new("Cannot promote on #{@board.cord(to)}")
+        end
       end
 
       @board.move(from, to)
@@ -408,6 +425,7 @@ module LxChess
 
     # Get the next turn index
     def next_turn
+      return 0.to_i8 if @players.size == 0
       (@turn + 1) % @players.size
     end
   end

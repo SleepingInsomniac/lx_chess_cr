@@ -12,6 +12,7 @@ module LxChess
     KNIGHT = 5
 
     def self.from_fen(fen : Char)
+      raise "#{fen} is not a valid FEN symbol" unless FEN_SYMBOLS.chars.includes?(fen)
       id = FEN_SYMBOLS.index(fen).as(Int32).to_i8
       Piece.new(id)
     end

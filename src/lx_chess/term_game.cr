@@ -71,7 +71,7 @@ module LxChess
                     end
             if from && to
               @gb.clear
-              san = @game.make_move(from, to)
+              san = @game.make_move(from, to, promo)
               @gb.highlight([@game.board.index(from), @game.board.index(to)])
               @log.unshift "#{san.to_s}: #{from} => #{to}"
             end
@@ -84,7 +84,7 @@ module LxChess
           from, to = @game.parse_san(notation)
           if from && to
             @gb.clear
-            san = @game.make_move(from, to)
+            san = @game.make_move(from, to, notation.promotion)
             @gb.highlight([from.to_i16, to.to_i16])
             @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
           end
