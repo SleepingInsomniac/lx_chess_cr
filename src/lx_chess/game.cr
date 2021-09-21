@@ -287,9 +287,7 @@ module LxChess
 
       # Test if the move will expose check
       tmp_move(from, to) do
-        if in_check?
-          raise IllegalMove.new("Cannot move into check")
-        end
+        raise IllegalMove.new("Cannot move into check") if in_check?
       end
 
       san = move_to_san(from, to, promotion, next_turn)
@@ -300,7 +298,13 @@ module LxChess
         current_player.no_castling!
 
         if dist.abs == 2
+          raise IllegalMove.new("Cannot castle out of check") if in_check?
+
           if dist.positive?
+            tmp_move(from, to - 1) do
+              raise IllegalMove.new("Cannot castle through check") if in_check?
+            end
+
             san.castles_k = true
             rook = @board.find do |p|
               p && p.color == piece.color && p.rook? && p.index.as(Int16) > piece.index.as(Int16)
@@ -309,6 +313,10 @@ module LxChess
               @board.move(from: rook.index.as(Int16), to: to - 1)
             end
           else
+            tmp_move(from, to + 1) do
+              raise IllegalMove.new("Cannot castle through check") if in_check?
+            end
+
             san.castles_q = true
             rook = @board.find do |p|
               p && p.color == piece.color && p.rook? && p.index.as(Int16) < piece.index.as(Int16)

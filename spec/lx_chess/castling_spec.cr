@@ -74,4 +74,20 @@ describe "Castling" do
       game.make_move(from: "d1", to: "f1")
     end
   end
+
+  it "does not allow castling if the king will move through check" do
+    fen = Fen.parse("5r2/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+    game = Game.new(board: fen.board, players: [Player.new, Player.new])
+    expect_raises(Game::IllegalMove) do
+      game.make_move(from: "e1", to: "g1")
+    end
+  end
+
+  it "does not allow castling if the king is in check" do
+    fen = Fen.parse("4r3/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+    game = Game.new(board: fen.board, players: [Player.new, Player.new])
+    expect_raises(Game::IllegalMove) do
+      game.make_move(from: "e1", to: "g1")
+    end
+  end
 end
