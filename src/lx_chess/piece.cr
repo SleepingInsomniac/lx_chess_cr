@@ -35,7 +35,7 @@ module LxChess
     end
 
     def name
-      NAMES[@id & 0b1000]
+      NAMES[@id & 0b0111]
     end
 
     def symbol(force_black = false)

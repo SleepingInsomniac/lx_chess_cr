@@ -121,7 +121,7 @@ module LxChess
         # from, to
         [piece.index.as(Int16), index.as(Int16)]
       else
-        raise SanError.new("no pieces can move to #{notation.square}")
+        raise SanError.new("no moves matching `#{notation.to_s}`")
       end
     end
 
@@ -399,30 +399,49 @@ module LxChess
       san
     end
 
+    # Return the pieces for a specified player
+    def pieces_for(turn = @turn)
+      color = turn == 0 ? :black : :white
+      @board.select do |square|
+        square.try { |piece| piece.color != color }
+      end.compact
+    end
+
     def in_check?(turn = @turn)
-      if king = find_king(turn)
-        opponent_pieces = @board.select do |square|
-          square.try do |piece|
-            piece.color != king.color
+      return false unless king = find_king(turn)
+      in_check = false
+      moves = pieces_for(next_turn).each do |piece|
+        moves(piece.index).try do |move_set|
+          if move_set.moves.includes?(king.index)
+            in_check = true
+            break
           end
         end
-
-        in_check = false
-        moves = opponent_pieces.each do |piece|
-          piece.try do |piece|
-            moves(piece.index).try do |move_set|
-              if move_set.moves.includes?(king.index)
-                in_check = true
-                break
-              end
-            end
-          end
-        end
-
-        in_check
-      else
-        false
       end
+
+      in_check
+    end
+
+    # Make every move and test for check, if any move results in check=false,
+    # stop checking and return false
+    def checkmate?(turn = @turn)
+      return false unless king = find_king(turn)
+
+      checkmate = true
+
+      pieces_for(turn).each do |piece|
+        moves(piece.index).try do |move_set|
+          move_set.moves.each do |move|
+            tmp_move(move_set.piece.index, move) do
+              checkmate = in_check?
+            end
+            break unless checkmate
+          end
+        end
+        break unless checkmate
+      end
+
+      checkmate
     end
 
     # Increment the turn index

@@ -1,9 +1,9 @@
-require "../spec_helper"
-require "../../src/lx_chess/board"
-require "../../src/lx_chess/piece"
-require "../../src/lx_chess/move_set"
-require "../../src/lx_chess/game"
-require "../../src/lx_chess/fen"
+require "../../spec_helper"
+require "../../../src/lx_chess/board"
+require "../../../src/lx_chess/piece"
+require "../../../src/lx_chess/move_set"
+require "../../../src/lx_chess/game"
+require "../../../src/lx_chess/fen"
 
 include LxChess
 
