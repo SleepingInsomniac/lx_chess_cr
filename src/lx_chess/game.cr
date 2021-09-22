@@ -125,14 +125,19 @@ module LxChess
       end
     end
 
-    # TODO: checkmate
+    def move_to_san(from : String, to : String, promotion : Char? = nil, turn = @turn)
+      move_to_san(@board.index(from), @board.index(to), promotion, turn)
+    end
+
     def move_to_san(from : Int, to : Int, promotion : Char? = nil, turn = @turn)
       raise "No piece at #{@board.cord(from)}" unless piece = @board[from]
       en_passant = piece.pawn? && to == @en_passant_target
 
       check = tmp_move(from, to) do
-        in_check?(turn)
+        in_check?(next_turn(turn))
       end
+
+      checkmate = check ? tmp_move(from, to) { checkmate?(next_turn(turn)) } : false
 
       Notation.new(
         square: @board.cord(to),
@@ -142,7 +147,8 @@ module LxChess
         to: @board.cord(to),
         takes: en_passant || !@board[to].nil?,
         en_passant: en_passant,
-        check: check
+        check: check && !checkmate,
+        checkmate: checkmate
       )
     end
 
@@ -260,12 +266,22 @@ module LxChess
       @board[index - 1].nil? && @board[index - 2].nil?
     end
 
+    def tmp_move(from : String, to : String, promotion : Char? = nil)
+      tmp_move(@board.index(from), @board.index(to), promotion) do
+        yield
+      end
+    end
+
     # Temporarily make a move
-    def tmp_move(from : Int16, to : Int16)
+    def tmp_move(from : Int16, to : Int16, promotion : Char? = nil)
       from_piece = @board[from]
       to_piece = @board[to]
       @board[from] = nil
-      @board[to] = from_piece
+      if promotion
+        @board[to] = Piece.from_fen(promotion)
+      else
+        @board[to] = from_piece
+      end
       return_val = yield
     ensure
       @board[from] = from_piece
@@ -290,7 +306,7 @@ module LxChess
         raise IllegalMove.new("Cannot move into check") if in_check?
       end
 
-      san = move_to_san(from, to, promotion, next_turn)
+      san = move_to_san(from, to, promotion)
 
       # Castling
       if piece.king?
@@ -410,7 +426,7 @@ module LxChess
     def in_check?(turn = @turn)
       return false unless king = find_king(turn)
       in_check = false
-      moves = pieces_for(next_turn).each do |piece|
+      moves = pieces_for(next_turn(turn)).each do |piece|
         moves(piece.index).try do |move_set|
           if move_set.moves.includes?(king.index)
             in_check = true
@@ -422,6 +438,7 @@ module LxChess
       in_check
     end
 
+    # TODO: Optimize
     # Make every move and test for check, if any move results in check=false,
     # stop checking and return false
     def checkmate?(turn = @turn)
@@ -433,7 +450,7 @@ module LxChess
         moves(piece.index).try do |move_set|
           move_set.moves.each do |move|
             tmp_move(move_set.piece.index, move) do
-              checkmate = in_check?
+              checkmate = in_check?(turn)
             end
             break unless checkmate
           end
@@ -451,9 +468,9 @@ module LxChess
     end
 
     # Get the next turn index
-    def next_turn
+    def next_turn(turn = @turn)
       return 0.to_i8 if @players.size == 0
-      (@turn + 1) % @players.size
+      (turn + 1) % @players.size
     end
   end
 end

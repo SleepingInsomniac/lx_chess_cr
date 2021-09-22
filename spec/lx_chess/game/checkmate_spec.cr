@@ -14,9 +14,10 @@ describe Game do
         fen = Fen.parse("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
         game = Game.new(board: fen.board, players: [Player.new, Player.new])
         game.checkmate?(1).should eq(false)
-        game.make_move("h5", "f7")
+        san = game.make_move("h5", "f7")
         debug_board(game, ["h5", "f7"])
         game.checkmate?(1).should eq(true)
+        san.to_s.should eq("Qxf7#")
       end
     end
   end

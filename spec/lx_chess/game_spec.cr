@@ -9,6 +9,88 @@ require "../../src/lx_chess/player"
 include LxChess
 
 describe Game do
+  describe "#tmp_move" do
+    it "makes a temporary move" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["c8"] = rook = Piece.from_fen('r')
+      game.board["e8"] = pawn = Piece.from_fen('P')
+      game.tmp_move("c8", "e8") do
+        game.board["e8"].should eq(rook)
+      end
+      game.board["c8"].should eq(rook)
+      game.board["e8"].should eq(pawn)
+    end
+
+    it "detects check within a tmp_move" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["c8"] = rook = Piece.from_fen('r')
+      game.board["e1"] = king = Piece.from_fen('K')
+      game.tmp_move("c8", "e8") do
+        game.board["e8"].should eq(rook)
+        game.in_check?(0).should eq(true)
+      end
+      game.in_check?(0).should eq(false)
+    end
+
+    it "can be nested" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["c8"] = rook = Piece.from_fen('r')
+      game.board["e1"] = king = Piece.from_fen('K')
+      game.tmp_move("c8", "e8") do
+        game.board["e8"].should eq(rook)
+        game.in_check?(0).should eq(true)
+        game.tmp_move("e1", "d1") do
+          game.in_check?(0).should eq(false)
+        end
+      end
+      game.board["c8"].should eq(rook)
+      game.board["e1"].should eq(king)
+    end
+  end
+
+  describe "#move_to_san" do
+    it "detects check" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["e1"] = Piece.from_fen('K')
+      game.board["c8"] = Piece.from_fen('r')
+      debug_board(game, ["c8", "e8"])
+      san = game.move_to_san(from: "c8", to: "e8", turn: 1)
+      san.to_s.should eq("Re8+")
+    end
+
+    it "detects checkmate" do
+      fen = Fen.parse("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
+      game = Game.new(board: fen.board, players: [Player.new, Player.new])
+      san = game.move_to_san(from: "h5", to: "f7", turn: 0)
+      debug_board(game, ["h5", "f7"])
+      san.to_s.should eq("Qxf7#")
+    end
+  end
+
+  describe "#in_check?" do
+    it "detects if the player is in check" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["e1"] = Piece.from_fen('K')
+      game.board["e8"] = Piece.from_fen('r')
+      debug_board(game)
+      game.in_check?(0).should eq(true)
+    end
+  end
+
+  describe "#next_turn" do
+    it "returns the next turn number" do
+      game = Game.new players: [Player.new, Player.new]
+      game.turn.should eq(0)
+      game.next_turn.should eq(1)
+    end
+
+    it "returns the relative next turn number" do
+      game = Game.new players: [Player.new, Player.new]
+      game.turn.should eq(0)
+      game.next_turn(1).should eq(0)
+    end
+  end
+
   describe "#castling=" do
     it "sets the castling from a string" do
       player_white = Player.new
@@ -25,7 +107,7 @@ describe Game do
   describe "#find_king" do
     it "finds the black king" do
       game = Game.new
-      place(game.board, { "e1" => 'K', "e8" => 'k' })
+      place(game.board, {"e1" => 'K', "e8" => 'k'})
       black_king = game.find_king(1)
       black_king.should_not be(nil)
       black_king.try { |k| k.fen_symbol.should eq('k') }
@@ -33,7 +115,7 @@ describe Game do
 
     it "finds the white king" do
       game = Game.new
-      place(game.board, { "e1" => 'K', "e8" => 'k' })
+      place(game.board, {"e1" => 'K', "e8" => 'k'})
       white_king = game.find_king(0)
       white_king.should_not be(nil)
       white_king.try { |k| k.fen_symbol.should eq('K') }
