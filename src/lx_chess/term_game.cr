@@ -3,12 +3,14 @@ require "./game"
 require "./player"
 require "./terminal"
 require "./term_board"
+require "./pgn"
 
 module LxChess
   # Represents a chess game played through the terminal
   class TermGame
     property gb : TermBoard
     getter log
+    property pgn : PGN = PGN.new
 
     def initialize(@fen : Fen, players = [Player.new, Player.new])
       @term = Terminal.new
@@ -71,7 +73,9 @@ module LxChess
                     end
             if from && to
               @gb.clear
-              san = @game.make_move(from, to, promo)
+              san = @game.move_to_san(from, to, promo)
+              @game.make_move(from, to, promo)
+              @pgn.history << san
               @gb.highlight([@game.board.index(from), @game.board.index(to)])
               @log.unshift "#{san.to_s}: #{from} => #{to}"
             end
@@ -84,7 +88,9 @@ module LxChess
           from, to = @game.parse_san(notation)
           if from && to
             @gb.clear
-            san = @game.make_move(from, to, notation.promotion)
+            san = @game.move_to_san(from, to, notation.promotion)
+            @game.make_move(from, to, notation.promotion)
+            @pgn.history << san
             @gb.highlight([from.to_i16, to.to_i16])
             @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
           end
@@ -131,7 +137,7 @@ module LxChess
     end
 
     private def draw_pgn
-      @game.pgn.strings.each_with_index do |m, i|
+      @pgn.strings.each_with_index do |m, i|
         @term.move @game.board.width * 2 + 10, y: 3 + i
         print m
       end

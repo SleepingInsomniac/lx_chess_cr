@@ -18,7 +18,6 @@ module LxChess
     property move_clock : Int16 = 0
     property en_passant_target : Int16?
     property fifty_move_rule : Int8 = 0
-    property pgn : PGN = PGN.new
 
     def initialize(@board : Board = Board.new, @players = [] of Player)
     end
@@ -409,13 +408,8 @@ module LxChess
         end
       end
 
-      san = move_to_san(from, to, promotion)
-
       @board.move(from, to)
       next_turn!
-
-      @pgn.history << san
-      san
     end
 
     # Return the pieces for a specified player
