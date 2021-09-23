@@ -236,7 +236,6 @@ module LxChess
             {x: 0, y: -1},  # down
             {x: -1, y: -1}, # down left
           ])
-          # TODO: castling
           if can_castle_king?(piece)
             set.add_offset(x: 2, y: 0)
           end
@@ -246,6 +245,17 @@ module LxChess
         end
         set
       end
+    end
+
+    # Removes moves that reveal check from a *MoveSet*
+    # TODO: optimize this? Maybe don't generate illegal moves and stop early for sliding pieces
+    def remove_illegal_moves(move_set : MoveSet)
+      move_set.moves = move_set.moves.reject do |move|
+        tmp_move(move_set.piece.index, move) do
+          in_check?(move_set.piece.white? ? 0 : 1)
+        end
+      end
+      move_set
     end
 
     def can_castle_king?(piece)
@@ -385,7 +395,6 @@ module LxChess
             capture = distance > 0 ? to + @board.width : to - @board.width
             @board[capture] = nil
           end
-
           @en_passant_target = nil
         end
       else

@@ -9,6 +9,23 @@ require "../../src/lx_chess/player"
 include LxChess
 
 describe Game do
+  describe "#remove_illegal_moves" do
+    it "removes illegal moves" do
+      game = Game.new players: [Player.new, Player.new]
+      game.board["e8"] = rook = Piece.from_fen('r')
+      game.board["e4"] = pawn = Piece.from_fen('R')
+      game.board["e1"] = king = Piece.from_fen('K')
+
+      if move_set = game.moves("e4")
+        move_set = game.remove_illegal_moves(move_set)
+        debug_board(game, move_set.moves)
+        move_set.moves.should eq([36, 44, 52, 60, 20, 12])
+      else
+        raise "move set was nil"
+      end
+    end
+  end
+
   describe "#tmp_move" do
     it "makes a temporary move" do
       game = Game.new players: [Player.new, Player.new]

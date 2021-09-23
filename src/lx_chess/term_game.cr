@@ -51,7 +51,9 @@ module LxChess
 
         move_sets = pieces.map do |piece|
           next unless piece
-          @game.moves(piece.index.as(Int16))
+          if s = @game.moves(piece.index.as(Int16))
+            @game.remove_illegal_moves(s)
+          end
         end
 
         move_string = move_sets.map do |set|
