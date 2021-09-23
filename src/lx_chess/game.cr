@@ -138,6 +138,7 @@ module LxChess
       end
 
       checkmate = check ? tmp_move(from, to) { checkmate?(next_turn(turn)) } : false
+      castling = piece.king? ? to - from : nil
 
       Notation.new(
         square: @board.cord(to),
@@ -148,7 +149,9 @@ module LxChess
         takes: en_passant || !@board[to].nil?,
         en_passant: en_passant,
         check: check && !checkmate,
-        checkmate: checkmate
+        checkmate: checkmate,
+        castles_k: castling && castling.positive? || false,
+        castles_q: castling && castling.negative? || false
       )
     end
 
@@ -293,6 +296,7 @@ module LxChess
       make_move(from: @board.index(from), to: @board.index(to), promotion: promotion)
     end
 
+    # Make a move given a set of coordinates
     def make_move(from : Int16, to : Int16, promotion : Char? = nil)
       raise IllegalMove.new("#{@board.cord(from)} is empty") unless piece = @board[from]
       if move_set = moves(from)
@@ -305,8 +309,6 @@ module LxChess
       tmp_move(from, to) do
         raise IllegalMove.new("Cannot move into check") if in_check?
       end
-
-      san = move_to_san(from, to, promotion)
 
       # Castling
       if piece.king?
@@ -321,7 +323,6 @@ module LxChess
               raise IllegalMove.new("Cannot castle through check") if in_check?
             end
 
-            san.castles_k = true
             rook = @board.find do |p|
               p && p.color == piece.color && p.rook? && p.index.as(Int16) > piece.index.as(Int16)
             end
@@ -333,7 +334,6 @@ module LxChess
               raise IllegalMove.new("Cannot castle through check") if in_check?
             end
 
-            san.castles_q = true
             rook = @board.find do |p|
               p && p.color == piece.color && p.rook? && p.index.as(Int16) < piece.index.as(Int16)
             end
@@ -409,8 +409,11 @@ module LxChess
         end
       end
 
+      san = move_to_san(from, to, promotion)
+
       @board.move(from, to)
       next_turn!
+
       @pgn.history << san
       san
     end
