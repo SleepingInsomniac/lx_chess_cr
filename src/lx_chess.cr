@@ -1,12 +1,4 @@
-require "./lx_chess/version"
-require "./lx_chess/board"
-require "./lx_chess/terminal"
-require "./lx_chess/term_board"
-require "./lx_chess/game"
-require "./lx_chess/fen"
-require "./lx_chess/notation"
-require "./lx_chess/term_game"
-
+require "./lx_chess/*"
 require "option_parser"
 
 options = {} of String => String | Nil
@@ -32,6 +24,10 @@ OptionParser.parse do |parser|
     options["theme"] = color
   end
 
+  parser.on("--open=PGN", "open a pgn file") do |path|
+    options["pgn_path"] = path
+  end
+
   parser.invalid_option do |flag|
     STDERR.puts "ERROR: #{flag} is not a valid option."
     STDERR.puts parser
@@ -40,11 +36,21 @@ OptionParser.parse do |parser|
 end
 
 fen = LxChess::Fen.parse(options["fen_string"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-game = LxChess::TermGame.new(fen: fen)
+term_game = LxChess::TermGame.new(fen: fen)
+
+if path = options["pgn_path"]?
+  game = LxChess::Game.new
+  pgn_file = File.read(path)
+  pgn = LxChess::PGN.new(pgn_file)
+
+  puts pgn.strings
+
+  exit 0
+end
 
 if theme = options["theme"]?
   if LxChess::TermBoard::THEMES[theme]?
-    game.gb.board_theme = theme
+    term_game.gb.board_theme = theme
   else
     STDERR.puts "No theme #{theme}"
     exit 1
@@ -52,5 +58,5 @@ if theme = options["theme"]?
 end
 
 loop do
-  game.tick
+  term_game.tick
 end

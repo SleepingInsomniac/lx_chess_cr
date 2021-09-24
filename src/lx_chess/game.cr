@@ -3,7 +3,6 @@ require "./board"
 require "./notation"
 require "./move_set"
 require "./error"
-require "./pgn"
 require "./fen"
 
 module LxChess
