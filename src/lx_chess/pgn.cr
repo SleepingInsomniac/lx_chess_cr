@@ -2,6 +2,7 @@ require "string_scanner"
 require "./notation"
 require "./game"
 require "./player"
+require "./fen"
 
 module LxChess
   class PGN
@@ -32,7 +33,7 @@ module LxChess
         end
       end
 
-      fen_string = @tags["FEN"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+      fen_string = @tags["FEN"]? || Fen::STANDARD
       fen = Fen.parse(fen_string)
       @game = Game.new(board: fen.board, players: [Player.new, Player.new])
       moves = [] of String

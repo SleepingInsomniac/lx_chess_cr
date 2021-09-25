@@ -8,8 +8,18 @@ module LxChess
   class Fen
     class InvalidFen < Error; end
 
+    FEN_REGEX = %r{
+      (?<placement>(?:[PKQRBN\d\/]+)+)\s+
+      (?<turn>[a-z])\s+
+      (?<castling>[a-z\-]+)\s+
+      (?<en_passant>[a-z\d\-]+)\s+
+      (?<half_clock>\d+)\s+
+      (?<full_clock>\d+)
+    }xi
+    STANDARD = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
     def self.parse(fen : String)
-      raise InvalidFen.new("Invalid FEN") unless fen =~ /[rnbqkp\d\/]+\s+[a-z]+\s[a-z\-]+\s+[a-z\-]+\s\d+\s\d+/i
+      raise InvalidFen.new("#{fen} is not valid") unless fen =~ FEN_REGEX
       placement, turn, castling, en_passant, halfmove_clock, fullmove_counter = fen.split(/\s+/)
 
       board = self.parse_placement(placement)
