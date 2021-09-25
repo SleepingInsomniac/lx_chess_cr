@@ -153,7 +153,20 @@ module LxChess
       end
 
       checkmate = check ? tmp_move(from, to) { checkmate?(next_turn(turn)) } : false
-      castling = piece.king? ? to - from : nil
+
+      castles_k = false
+      castles_q = false
+
+      if piece.king?
+        dist = (to - from)
+        if dist.abs == 2
+          if dist.positive?
+            castles_k = true
+          else
+            castles_q = true
+          end
+        end
+      end
 
       Notation.new(
         square: @board.cord(to),
@@ -165,8 +178,8 @@ module LxChess
         en_passant: en_passant,
         check: check && !checkmate,
         checkmate: checkmate,
-        castles_k: castling && castling.positive? || false,
-        castles_q: castling && castling.negative? || false
+        castles_k: castles_k,
+        castles_q: castles_q
       )
     end
 
