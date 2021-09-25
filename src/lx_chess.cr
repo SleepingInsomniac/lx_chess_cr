@@ -43,9 +43,7 @@ if path = options["pgn_path"]?
   pgn_file = File.read(path)
   pgn = LxChess::PGN.new(pgn_file)
 
-  puts pgn.strings
-
-  exit 0
+  term_game = LxChess::TermGame.new(pgn: pgn)
 end
 
 if theme = options["theme"]?
@@ -57,6 +55,7 @@ if theme = options["theme"]?
   end
 end
 
+term_game.clear_screen
 loop do
   term_game.tick
 end

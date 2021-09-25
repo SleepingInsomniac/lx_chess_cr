@@ -9,16 +9,21 @@ module LxChess
   # Represents a chess game played through the terminal
   class TermGame
     property gb : TermBoard
-    getter log
+    getter log = [] of String
     property pgn : PGN = PGN.new
+    property game : Game
+    property term : Terminal = Terminal.new
+
+    def initialize(@pgn = PGN.new)
+      @game = @pgn.game
+      @fen = Fen.new(board: @game.board)
+      @gb = TermBoard.new(@game.board)
+    end
 
     def initialize(@fen : Fen, players = [Player.new, Player.new])
-      @term = Terminal.new
       @game = Game.new(board: @fen.board, players: players)
       @game.set_fen_attributes(fen)
       @gb = TermBoard.new(@game.board)
-      @log = [] of String
-      clear_screen
     end
 
     def tick
@@ -118,14 +123,14 @@ module LxChess
       draw_prompt
     end
 
-    # ===================
-    # = Drawing methods =
-    # ===================
-
-    private def clear_screen
+    def clear_screen
       @term.clear
       @term.clear_scroll
     end
+
+    # ===================
+    # = Drawing methods =
+    # ===================
 
     private def draw_fen
       @term.move 0, 0
@@ -138,9 +143,10 @@ module LxChess
       @gb.draw
     end
 
-    private def draw_pgn
+    private def draw_pgn(height = 9, width = 18)
+      base_offset_x = @game.board.width * 2 + 10
       @pgn.strings.each_with_index do |m, i|
-        @term.move @game.board.width * 2 + 10, y: 3 + i
+        @term.move x: base_offset_x + ((i / height).to_i * width), y: 3 + (i % height)
         print m
       end
     end

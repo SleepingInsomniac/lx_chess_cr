@@ -69,11 +69,11 @@ module LxChess
 
     def initialize(
       @board,
-      @turn,
-      @castling,
-      @en_passant,
-      @halfmove_clock,
-      @fullmove_counter
+      @turn = "w",
+      @castling = "KQkq",
+      @en_passant = "-",
+      @halfmove_clock : Int8 = 0,
+      @fullmove_counter : Int16 = 1
     )
     end
 

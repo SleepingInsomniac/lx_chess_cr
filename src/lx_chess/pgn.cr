@@ -21,6 +21,7 @@ module LxChess
 
     property tags = {} of String => String
     property history = [] of Notation
+    property game : Game
 
     def initialize(pgn : String)
       scanner = StringScanner.new(pgn)
@@ -33,9 +34,7 @@ module LxChess
 
       fen_string = @tags["FEN"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
       fen = Fen.parse(fen_string)
-      game = Game.new(board: fen.board, players: [Player.new, Player.new])
-      gb = TermBoard.new(game.board)
-
+      @game = Game.new(board: fen.board, players: [Player.new, Player.new])
       moves = [] of String
 
       while turn = scanner.scan_until(TURN_REGEX)
@@ -50,20 +49,16 @@ module LxChess
 
       moves.each do |move|
         notation = Notation.new(move)
-        from, to = game.parse_san(notation)
+        from, to = @game.parse_san(notation)
         if from && to
-          san = game.move_to_san(from, to, notation.promotion)
-          game.make_move(from, to, notation.promotion)
-          puts move
-          gb.draw
-          puts
-          puts
+          san = @game.move_to_san(from, to, notation.promotion)
+          @game.make_move(from, to, notation.promotion)
           @history << san
         end
       end
     end
 
-    def initialize
+    def initialize(@game = Game.new)
     end
 
     def strings
