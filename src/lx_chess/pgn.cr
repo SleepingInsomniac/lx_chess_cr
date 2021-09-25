@@ -44,6 +44,7 @@ module LxChess
           moves.push(san)
           while comment = scanner.scan(COMMENT_REGEX); end
           while variation = scanner.scan(VARIATION_REGEX); end
+          scanner.scan(/\s*/)
         end
       end
 
