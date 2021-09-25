@@ -105,19 +105,36 @@ module LxChess
 
       fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
 
-      pieces = @board.select do |piece|
+      move_sets = @board.map do |piece|
         next if piece.nil?
         next unless piece.fen_symbol == fen_symbol
-        if move_set = moves(piece.index.as(Int16))
-          move_set.moves.includes?(index)
+        piece.index.try do |idx|
+          moves(idx)
+        end
+      end.compact
+
+      move_sets = move_sets.select do |set|
+        set.moves.includes?(index)
+      end
+
+      move_sets = disambiguate_candidates(notation, move_sets)
+
+      # If there is still more than 1 move_set, remove illegal moves
+      # and select sets that still include the destination
+      if move_sets.size > 1
+        move_sets = move_sets.map do |set|
+          remove_illegal_moves(set)
+        end
+
+        move_sets = move_sets.select do |set|
+          set.moves.includes?(index)
         end
       end
 
-      pieces = disambiguate_candidates(notation, pieces)
-      raise SanError.new("#{notation.to_s} is ambiguous") if pieces.size > 1
-      if piece = pieces.first?
+      raise SanError.new("#{notation.to_s} is ambiguous") if move_sets.size > 1
+      if set = move_sets.first?
         # from, to
-        [piece.index.as(Int16), index.as(Int16)]
+        [set.piece.index.as(Int16), index.as(Int16)]
       else
         raise SanError.new("no moves matching `#{notation.to_s}`")
       end
@@ -154,28 +171,31 @@ module LxChess
     end
 
     # Attempt to reduce ambiguities in candidate moves
-    def disambiguate_candidates(notation : Notation, pieces : Array(Piece | Nil))
-      return pieces unless origin = notation.origin
-      case origin
+    def disambiguate_candidates(notation : Notation, move_sets : Array(MoveSet))
+      return move_sets if move_sets.size <= 1
+      case notation.origin
       when /[a-z]\d/
+        raise "error" unless origin = notation.origin
         piece = @board[origin]
-        pieces.select { |c| c == piece }
+        move_sets.select { |s| s.piece == piece }
       when /[a-z]/
+        raise "error" unless origin = notation.origin
         file = Board::LETTERS.index(origin[0].downcase) || 0
-        pieces.select do |c|
-          next unless c
-          next unless index = c.index
+        move_sets.select do |s|
+          next unless s
+          next unless index = s.piece.index
           @board.file(index) == file
         end
       when /\d/
+        raise "error" unless origin = notation.origin
         rank = origin.to_i16
-        pieces.select do |c|
-          next unless c
-          next unless index = c.index
+        move_sets.select do |s|
+          next unless s
+          next unless index = s.piece.index
           @board.rank(index) == rank
         end
       else
-        pieces
+        move_sets
       end
     end
 
