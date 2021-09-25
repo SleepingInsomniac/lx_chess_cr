@@ -6,7 +6,7 @@ require "./player"
 module LxChess
   class PGN
     TAG_REGEX  = /\[(?<key>[a-z]+)\s+(?<value>[^\]]+)\]/i
-    MOVE_REGEX = /(?<turn>\d+)\.\s*(?<white>[^\s]+)\s+(?<black>[^\s]+)/i
+    MOVE_REGEX = /\d+\.+\s*(?<white>[^\s]+)\s*(\{[^\}]+\})?\s+(\d\.+)?\s*(?<black>[^\s]+)\s*(\{[^\}]+\})?/i
 
     property tags = {} of String => String
     property history = [] of Notation
@@ -35,6 +35,7 @@ module LxChess
               san = game.move_to_san(from, to, notation.promotion)
               game.make_move(from, to, notation.promotion)
               gb.draw
+              puts
               puts
               @history << san
             end
