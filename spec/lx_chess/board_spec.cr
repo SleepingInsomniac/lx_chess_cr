@@ -26,4 +26,11 @@ describe LxChess::Board do
       board.border_right(12).should eq(15)
     end
   end
+
+  describe "#index" do
+    it "returns the index of a coordinate" do
+      board = LxChess::Board.new
+      board.index_of("e2").should eq(12)
+    end
+  end
 end

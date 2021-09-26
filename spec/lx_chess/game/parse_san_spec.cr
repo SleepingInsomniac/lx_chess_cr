@@ -13,8 +13,8 @@ describe Game do
         game = Game.new
         game.board["e2"] = Piece.from_fen('P')
         from, to = game.parse_san("e4")
-        from.should eq(game.board.index("e2"))
-        to.should eq(game.board.index("e4"))
+        from.should eq(game.board.index_of("e2"))
+        to.should eq(game.board.index_of("e4"))
       end
 
       it "disambiguates the move correctly" do
@@ -27,7 +27,7 @@ describe Game do
 
         moves = game.parse_san("dxe5")
         debug_board(game, moves)
-        moves.should eq(["d4", "e5"].map { |s| game.board.index(s) })
+        moves.should eq(["d4", "e5"].map { |s| game.board.index_of(s) })
       end
     end
   end

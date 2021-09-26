@@ -38,7 +38,7 @@ module LxChess
       when /moves\s+([a-z]\d)/i
         if matches = input.match(/[a-z]\d/i)
           if square = matches[0]?
-            if index = @game.board.index(square)
+            if index = @game.board.index_of(square)
               if set = @game.moves(index)
                 @gb.highlight(set.moves, "blue")
                 from = "#{set.piece.fen_symbol}#{@game.board.cord(index)}: "
@@ -83,7 +83,7 @@ module LxChess
               san = @game.move_to_san(from, to, promo)
               @game.make_move(from, to, promo)
               @pgn.history << san
-              @gb.highlight([@game.board.index(from), @game.board.index(to)])
+              @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
               @log.unshift "#{san.to_s}: #{from} => #{to}"
             end
           end

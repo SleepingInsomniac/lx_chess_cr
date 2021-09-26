@@ -73,7 +73,7 @@ module LxChess
         io << (y + 1).to_s.rjust(3) << ": "
 
         files.each do |x|
-          index = @board.index(x, y)
+          index = @board.index_of(x, y)
           piece = @board[index]
 
           tint = (index + y) % 2 == 0 ? :light : :dark

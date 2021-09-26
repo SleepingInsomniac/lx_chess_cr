@@ -5,11 +5,11 @@ require "../src/lx_chess/board"
 require "../src/lx_chess/term_board"
 
 def debug_board(game : LxChess::Game, moves : Array(String))
-  moves = moves.map { |m| game.board.index(m) }
+  moves = moves.map { |m| game.board.index_of(m) }
   debug_board(game, moves)
 end
 
-def debug_board(game : LxChess::Game, moves = [] of Int16)
+def debug_board(game : LxChess::Game, moves : Array(Int16) = [] of Int16)
   puts
   gb = LxChess::TermBoard.new(game.board)
   gb.highlight(moves)

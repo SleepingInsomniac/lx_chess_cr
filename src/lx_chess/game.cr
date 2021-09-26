@@ -52,7 +52,7 @@ module LxChess
 
     def en_passant_target=(cord : String)
       if cord =~ /[a-z]+\d+/
-        @en_passant_target = @board.index(cord)
+        @en_passant_target = @board.index_of(cord)
       else
         @en_passant_target = nil
       end
@@ -63,7 +63,7 @@ module LxChess
     end
 
     def en_passant_target=(cord : String)
-      @en_passant_target = @board.index(cord)
+      @en_passant_target = @board.index_of(cord)
     end
 
     def full_moves
@@ -85,7 +85,7 @@ module LxChess
 
     # Parse standard algebraic notation
     def parse_san(notation : Notation)
-      index = @board.index(notation.square)
+      index = nil
 
       if notation.castles?
         raise "expected to find a king, but couldn't!" unless king = find_king
@@ -102,6 +102,12 @@ module LxChess
           notation.square = @board.cord(index)
         end
       end
+
+      if square = notation.square
+        index = @board.index_of(square)
+      end
+
+      raise "Missing index" unless index
 
       fen_symbol = notation.fen_symbol(@turn == 0 ? "w" : "b")
 
@@ -134,14 +140,14 @@ module LxChess
       raise SanError.new("#{notation.to_s} is ambiguous") if move_sets.size > 1
       if set = move_sets.first?
         # from, to
-        [set.piece.index.as(Int16), index.as(Int16)]
+        [set.piece.index, index]
       else
         raise SanError.new("no moves matching `#{notation.to_s}`")
       end
     end
 
     def move_to_san(from : String, to : String, promotion : Char? = nil, turn = @turn)
-      move_to_san(@board.index(from), @board.index(to), promotion, turn)
+      move_to_san(@board.index_of(from), @board.index_of(to), promotion, turn)
     end
 
     def move_to_san(from : Int, to : Int, promotion : Char? = nil, turn = @turn)
@@ -296,7 +302,6 @@ module LxChess
       return false unless player.castle_king
       return false unless index = piece.index
       return false unless (index - @board.border_left(index)).abs >= 2
-      # TODO: figure out if castling crosses checks
       @board[index + 1].nil? && @board[index + 2].nil?
     end
 
@@ -306,12 +311,11 @@ module LxChess
       return false unless player.castle_queen
       return false unless index = piece.index
       return false unless (index - @board.border_left(index)).abs >= 2
-      # TODO: figure out if castling crosses checks
       @board[index - 1].nil? && @board[index - 2].nil?
     end
 
     def tmp_move(from : String, to : String, promotion : Char? = nil)
-      tmp_move(@board.index(from), @board.index(to), promotion) do
+      tmp_move(@board.index_of(from), @board.index_of(to), promotion) do
         yield
       end
     end
@@ -334,7 +338,7 @@ module LxChess
     end
 
     def make_move(from : String, to : String, promotion : Char? = nil)
-      make_move(from: @board.index(from), to: @board.index(to), promotion: promotion)
+      make_move(from: @board.index_of(from), to: @board.index_of(to), promotion: promotion)
     end
 
     # Make a move given a set of coordinates
@@ -368,7 +372,7 @@ module LxChess
               p && p.color == piece.color && p.rook? && p.index.as(Int16) > piece.index.as(Int16)
             end
             if rook
-              @board.move(from: rook.index.as(Int16), to: to - 1)
+              @board.move(from: rook.index, to: to - 1)
             end
           else
             tmp_move(from, to + 1) do
@@ -379,7 +383,7 @@ module LxChess
               p && p.color == piece.color && p.rook? && p.index.as(Int16) < piece.index.as(Int16)
             end
             if rook
-              @board.move(from: rook.index.as(Int16), to: to + 1)
+              @board.move(from: rook.index, to: to + 1)
             end
           end
         end

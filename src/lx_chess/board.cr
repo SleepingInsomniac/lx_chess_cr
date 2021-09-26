@@ -38,12 +38,12 @@ module LxChess
 
     # Retrieve a piece at a human cord ex: `a1`
     def [](cord : String)
-      self[index(cord)]
+      self[index_of(cord)]
     end
 
     # Retrieve a piece at an *x* and *y* cord
     def at(x : Int, y : Int)
-      self[index(x, y)]
+      self[index_of(x, y)]
     end
 
     def rel_index(index : Int, x : Int, y : Int)
@@ -58,21 +58,21 @@ module LxChess
 
     # Set a piece on the board at a certain human readable *cord*
     def []=(cord : String, piece : Piece | Nil)
-      self[index(cord)] = piece
+      self[index_of(cord)] = piece
     end
 
     # Convert an *x* and *y* position into an index.
     # Ex: `4, 4` => `36`
-    def index(x : Int, y : Int)
+    def index_of(x : Int, y : Int)
       ((y * @width) + x).to_i16
     end
 
     # Convert human *cord* into an index on the board.
     # Ex: `a1` => `0`
-    def index(cord : String)
+    def index_of(cord : String)
       x = LETTERS.index(cord[0].downcase) || 0
       y = cord[1].to_i - 1
-      index(x, y)
+      index_of(x, y)
     end
 
     # Convert an *index* into a human coordinate (ex: `a1`)
