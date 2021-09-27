@@ -20,7 +20,7 @@ describe Game do
       it "raises an exception when promotion is not specified" do
         game = Game.new
         game.board["e7"] = Piece.from_fen('P')
-        game.make_move("e7", "e8", 'Q')
+        changes = game.make_move("e7", "e8", 'Q')
         piece = game.board["e8"]
         from = game.board["e7"]
         from.should be_nil

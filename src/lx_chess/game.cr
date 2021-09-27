@@ -4,6 +4,7 @@ require "./notation"
 require "./move_set"
 require "./error"
 require "./fen"
+require "./change"
 
 module LxChess
   # Represents a standard game of Chess
@@ -355,6 +356,8 @@ module LxChess
         raise IllegalMove.new("Cannot move into check") if in_check?
       end
 
+      changes = [] of Change
+
       # Castling
       if piece.king?
         dist = to - from
@@ -372,6 +375,8 @@ module LxChess
               p && p.color == piece.color && p.rook? && p.index.as(Int16) > piece.index.as(Int16)
             end
             if rook
+              changes << Change.new(index: rook.index, from: rook, to: nil)
+              changes << Change.new(index: to - 1, from: nil, to: rook)
               @board.move(from: rook.index, to: to - 1)
             end
           else
@@ -383,6 +388,8 @@ module LxChess
               p && p.color == piece.color && p.rook? && p.index.as(Int16) < piece.index.as(Int16)
             end
             if rook
+              changes << Change.new(index: rook.index, from: rook, to: nil)
+              changes << Change.new(index: to + 1, from: nil, to: rook)
               @board.move(from: rook.index, to: to + 1)
             end
           end
@@ -429,6 +436,7 @@ module LxChess
         else
           if to == @en_passant_target
             capture = distance > 0 ? to + @board.width : to - @board.width
+            changes << Change.new(index: capture, from: @board[capture], to: nil)
             @board[capture] = nil
           end
           @en_passant_target = nil
@@ -444,7 +452,9 @@ module LxChess
           if promotion
             raise IllegalMove.new("Cannot promote to #{promotion}") unless "RNBQ".chars.includes?(promotion.upcase)
             promotion = piece.white? ? promotion.upcase : promotion.downcase
-            @board[from] = Piece.from_fen(promotion)
+            promo_piece = Piece.from_fen(promotion)
+            changes << Change.new(index: from, from: @board[from], to: promo_piece)
+            @board[from] = promo_piece
           else
             raise IllegalMove.new("Pawns must promote on the last rank")
           end
@@ -453,8 +463,22 @@ module LxChess
         end
       end
 
+      changes << Change.new(index: from, from: @board[from], to: nil)
+      changes << Change.new(index: to, from: @board[to], to: @board[from])
       @board.move(from, to)
+
       next_turn!
+      changes
+    end
+
+    # Undo a move
+    def undo(changes : Array(Change))
+      changes.each do |change|
+        @board[change.index] = change.from
+      end
+      @turn = @turn - 1
+      @turn = (@players.size - 1).to_i8 if @turn < 0
+      @move_clock -= 1
     end
 
     # Return the pieces for a specified player

@@ -4,6 +4,7 @@ require "./player"
 require "./terminal"
 require "./term_board"
 require "./pgn"
+require "./change"
 
 module LxChess
   # Represents a chess game played through the terminal
@@ -13,6 +14,7 @@ module LxChess
     property pgn : PGN = PGN.new
     property game : Game
     property term : Terminal = Terminal.new
+    property history = [] of Array(Change)
 
     def initialize(@pgn = PGN.new)
       @game = @pgn.game
@@ -35,6 +37,22 @@ module LxChess
       input = gets || ""
 
       case input
+      when /help/i
+        msg = <<-HELP
+          Commands:
+            flip - Flip the board
+            moves [SQUARE] - Show the moves (optionally for a given square)
+            [SAN] - Standard algebraic notation (make a move)
+            [FROM] [TO] - specify move by coordinates
+        HELP
+        msg.lines.reverse.each { |l| @log.unshift(l) }
+      when /flip/i
+        @gb.flip!
+      when /(undo|back)/i
+        if last_change = @history.pop?
+          @game.undo(last_change)
+          @pgn.history.pop
+        end
       when /moves\s+([a-z]\d)/i
         if matches = input.match(/[a-z]\d/i)
           if square = matches[0]?
@@ -81,7 +99,7 @@ module LxChess
             if from && to
               @gb.clear
               san = @game.move_to_san(from, to, promo)
-              @game.make_move(from, to, promo)
+              @history << @game.make_move(from, to, promo)
               @pgn.history << san
               @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
               @log.unshift "#{san.to_s}: #{from} => #{to}"
@@ -96,7 +114,7 @@ module LxChess
           if from && to
             @gb.clear
             san = @game.move_to_san(from, to, notation.promotion)
-            @game.make_move(from, to, notation.promotion)
+            @history << @game.make_move(from, to, notation.promotion)
             @pgn.history << san
             @gb.highlight([from.to_i16, to.to_i16])
             @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
@@ -148,6 +166,7 @@ module LxChess
       @pgn.strings.each_with_index do |m, i|
         @term.move x: base_offset_x + ((i / height).to_i * width), y: 3 + (i % height)
         print m
+        @term.trunc
       end
     end
 
