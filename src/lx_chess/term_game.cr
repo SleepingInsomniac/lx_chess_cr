@@ -14,12 +14,13 @@ module LxChess
     property pgn : PGN = PGN.new
     property game : Game
     property term : Terminal = Terminal.new
-    property history = [] of Array(Change)
+    property changes = [] of Array(Change)
 
     def initialize(@pgn = PGN.new)
       @game = @pgn.game
       @fen = Fen.new(board: @game.board)
       @gb = TermBoard.new(@game.board)
+      @changes = @pgn.changes
     end
 
     def initialize(@fen : Fen, players = [Player.new, Player.new])
@@ -49,7 +50,7 @@ module LxChess
       when /flip/i
         @gb.flip!
       when /(undo|back)/i
-        if last_change = @history.pop?
+        if last_change = @changes.pop?
           @game.undo(last_change)
           @pgn.history.pop
         end
@@ -99,7 +100,7 @@ module LxChess
             if from && to
               @gb.clear
               san = @game.move_to_san(from, to, promo)
-              @history << @game.make_move(from, to, promo)
+              @changes << @game.make_move(from, to, promo)
               @pgn.history << san
               @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
               @log.unshift "#{san.to_s}: #{from} => #{to}"
@@ -114,7 +115,7 @@ module LxChess
           if from && to
             @gb.clear
             san = @game.move_to_san(from, to, notation.promotion)
-            @history << @game.make_move(from, to, notation.promotion)
+            @changes << @game.make_move(from, to, notation.promotion)
             @pgn.history << san
             @gb.highlight([from.to_i16, to.to_i16])
             @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"

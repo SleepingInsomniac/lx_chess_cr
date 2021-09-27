@@ -3,6 +3,7 @@ require "./notation"
 require "./game"
 require "./player"
 require "./fen"
+require "./change"
 
 module LxChess
   class PGN
@@ -23,6 +24,7 @@ module LxChess
     property tags = {} of String => String
     property history = [] of Notation
     property game : Game
+    property changes = [] of Array(Change)
 
     def initialize(pgn : String)
       scanner = StringScanner.new(pgn)
@@ -30,6 +32,8 @@ module LxChess
       while tag = scanner.scan_until(TAG_REGEX)
         tag.strip.match(TAG_REGEX).try do |match|
           @tags[match["key"]] = match["value"]
+            .gsub(/^\s*\"/, "")
+            .gsub(/\"\s*$/, "")
         end
       end
 
@@ -53,7 +57,7 @@ module LxChess
         from, to = @game.parse_san(notation)
         if from && to
           san = @game.move_to_san(from, to, notation.promotion)
-          @game.make_move(from, to, notation.promotion)
+          @changes << @game.make_move(from, to, notation.promotion)
           @history << san
         end
       end
