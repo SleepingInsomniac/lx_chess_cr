@@ -156,7 +156,7 @@ module LxChess
       when castles_q?
         "O-O-O"
       else
-        piece_abbr != 'P' || @takes ? piece_abbr : nil
+        piece_abbr unless piece_abbr == 'P'
       end
 
       if @en_passant

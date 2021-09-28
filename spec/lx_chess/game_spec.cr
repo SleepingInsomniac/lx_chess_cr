@@ -74,25 +74,6 @@ describe Game do
     end
   end
 
-  describe "#move_to_san" do
-    it "detects check" do
-      game = Game.new players: [Player.new, Player.new]
-      game.board["e1"] = Piece.from_fen('K')
-      game.board["c8"] = Piece.from_fen('r')
-      debug_board(game, ["c8", "e8"])
-      san = game.move_to_san(from: "c8", to: "e8", turn: 1)
-      san.to_s.should eq("Re8+")
-    end
-
-    it "detects checkmate" do
-      fen = Fen.parse("r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4")
-      game = Game.new(board: fen.board, players: [Player.new, Player.new])
-      san = game.move_to_san(from: "h5", to: "f7", turn: 0)
-      debug_board(game, ["h5", "f7"])
-      san.to_s.should eq("Qxf7#")
-    end
-  end
-
   describe "#in_check?" do
     it "detects if the player is in check" do
       game = Game.new players: [Player.new, Player.new]

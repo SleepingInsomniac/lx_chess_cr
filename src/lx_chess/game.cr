@@ -175,18 +175,46 @@ module LxChess
         end
       end
 
+      candidate_move_sets = @board.select do |candidate|
+        next unless candidate
+        next if candidate == piece
+        candidate.fen_symbol == piece.fen_symbol
+      end.compact.map do |candidate|
+        moves(candidate.index)
+      end.compact.select do |move_set|
+        move_set.moves.includes?(to)
+      end
+
+      origin = nil
+      takes = en_passant || !@board[to].nil?
+
+      if candidate_move_sets.any?
+        origin ||= ""
+        origin += @board.cord(from)[0]
+      end
+
+      if candidate_move_sets.any? { |set| @board.cord(set.piece.index)[0] == @board.cord(from)[0] }
+        origin ||= ""
+        origin += @board.cord(from)[1]
+      end
+
+      if origin.nil? && piece.pawn? && takes
+        origin = @board.cord(from)[0].to_s
+      end
+
       Notation.new(
         square: @board.cord(to),
         promotion: promotion,
         piece_abbr: piece.fen_symbol,
         from: @board.cord(from),
         to: @board.cord(to),
-        takes: en_passant || !@board[to].nil?,
+        takes: takes,
         en_passant: en_passant,
         check: check && !checkmate,
         checkmate: checkmate,
         castles_k: castles_k,
-        castles_q: castles_q
+        castles_q: castles_q,
+        origin: origin
       )
     end
 
