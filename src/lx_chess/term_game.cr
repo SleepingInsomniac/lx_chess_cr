@@ -49,6 +49,12 @@ module LxChess
         msg.lines.reverse.each { |l| @log.unshift(l) }
       when /flip/i
         @gb.flip!
+      when /score/i
+        @log.unshift "score: #{@game.score}"
+      when /suggest/i
+        if suggestion = @game.suggest
+          @log.unshift "suggestion: #{suggestion.map { |s| @game.board.cord(s) }.join(" => ")}"
+        end
       when /(undo|back)/i
         if last_change = @changes.pop?
           @game.undo(last_change)

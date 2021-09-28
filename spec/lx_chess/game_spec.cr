@@ -9,6 +9,15 @@ require "../../src/lx_chess/player"
 include LxChess
 
 describe Game do
+  describe "#score" do
+    it "scores the board" do
+      game = Game.new
+      game.board["e4"] = Piece.from_fen('P')
+      debug_board(game)
+      game.score.should eq(100)
+    end
+  end
+
   describe "#remove_illegal_moves" do
     it "removes illegal moves" do
       game = Game.new players: [Player.new, Player.new]

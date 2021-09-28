@@ -481,6 +481,46 @@ module LxChess
       @move_clock -= 1
     end
 
+    # evaluate a position
+    def score(board = @board)
+      @board.reduce(0) do |score, piece|
+        next score unless piece
+        val =
+          case piece.id
+          when Piece::PAWN   then 100
+          when Piece::KING   then 10000
+          when Piece::QUEEN  then 900
+          when Piece::ROOK   then 500
+          when Piece::BISHOP then 310
+          when Piece::KNIGHT then 300
+          else
+            0
+          end
+        piece.black? ? score - val : score + val
+      end
+    end
+
+    def suggest
+      best_score = 0
+      selected_piece = nil
+      best_move = nil
+      pieces_for.each do |piece|
+        next unless move_set = moves(piece.index)
+        move_set.moves.reduce(best_score) do |best, move_index|
+          move_score = tmp_move(from: piece.index, to: move_index) { score }
+          if move_score > best_score
+            selected_piece = piece
+            best_move = move_index
+            move_score
+          else
+            best
+          end
+        end
+      end
+      return nil unless selected_piece && best_move
+      [selected_piece.index, best_move]
+    end
+
     # Return the pieces for a specified player
     def pieces_for(turn = @turn)
       color = turn == 0 ? :black : :white

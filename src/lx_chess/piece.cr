@@ -22,6 +22,10 @@ module LxChess
     def initialize(@id : Int8 = 0)
     end
 
+    def id
+      @id & 0b0111
+    end
+
     def white?
       @id & 0b1000 == 0
     end
