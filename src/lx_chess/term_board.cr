@@ -76,7 +76,12 @@ module LxChess
           index = @board.index_of(x, y)
           piece = @board[index]
 
-          tint = (index + y) % 2 == 0 ? :light : :dark
+          tint =
+            if width.odd?
+              (index) % 2 == 0 ? :light : :dark
+            else
+              (index + y) % 2 == 0 ? :light : :dark
+            end
 
           background =
             if @highlights[index]?
