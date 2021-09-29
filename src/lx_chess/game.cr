@@ -236,7 +236,7 @@ module LxChess
         end
       when /\d/
         raise "error" unless origin = notation.origin
-        rank = origin.to_i16
+        rank = origin.to_i16 - 1
         move_sets.select do |s|
           next unless s
           next unless index = s.piece.index
