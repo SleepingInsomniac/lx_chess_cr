@@ -28,6 +28,20 @@ OptionParser.parse do |parser|
     options["pgn_path"] = path
   end
 
+  parser.on("--player-white=PLAYER", "set the type of player") do |player_type|
+    case player_type
+    when /c(omputer)?/i
+      options["player_white"] = "computer"
+    end
+  end
+
+  parser.on("--player-black=PLAYER", "set the type of player") do |player_type|
+    case player_type
+    when /c(omputer)?/i
+      options["player_black"] = "computer"
+    end
+  end
+
   parser.invalid_option do |flag|
     STDERR.puts "ERROR: #{flag} is not a valid option."
     STDERR.puts parser
@@ -35,8 +49,22 @@ OptionParser.parse do |parser|
   end
 end
 
+players = [] of LxChess::Player
+
+if player_type = options["player_white"]?
+  players << LxChess::Computer.new
+else
+  players << LxChess::Player.new
+end
+
+if player_type = options["player_black"]?
+  players << LxChess::Computer.new
+else
+  players << LxChess::Player.new
+end
+
 fen = LxChess::Fen.parse(options["fen_string"]? || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-term_game = LxChess::TermGame.new(fen: fen)
+term_game = LxChess::TermGame.new(fen: fen, players: players)
 
 if path = options["pgn_path"]?
   game = LxChess::Game.new
@@ -56,6 +84,4 @@ if theme = options["theme"]?
 end
 
 term_game.clear_screen
-loop do
-  term_game.tick
-end
+term_game.run!

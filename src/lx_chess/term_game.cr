@@ -15,8 +15,9 @@ module LxChess
     property game : Game
     property term : Terminal = Terminal.new
     property changes = [] of Array(Change)
+    @evaluator : Computer = Computer.new
 
-    def initialize(@pgn = PGN.new)
+    def initialize(@pgn = PGN.new, players = [Player.new, Player.new])
       @game = @pgn.game
       @fen = Fen.new(board: @game.board)
       @gb = TermBoard.new(@game.board)
@@ -29,102 +30,136 @@ module LxChess
       @gb = TermBoard.new(@game.board)
     end
 
-    def tick
-      draw
-      update
+    def run!
+      loop do
+        draw
+        break if @game.checkmate?
+        update
+      end
     end
 
     def update
-      input = gets || ""
+      player = @game.players[@game.turn]
 
-      case input
-      when /help/i
-        msg = <<-HELP
-          Commands:
-            flip - Flip the board
-            moves [SQUARE] - Show the moves (optionally for a given square)
-            [SAN] - Standard algebraic notation (make a move)
-            [FROM] [TO] - specify move by coordinates
-        HELP
-        msg.lines.reverse.each { |l| @log.unshift(l) }
-      when /flip/i
-        @gb.flip!
-      when /score/i
-        @log.unshift "score: #{@game.score}"
-      when /suggest/i
-        if suggestion = @game.suggest
-          @log.unshift "suggestion: #{suggestion.map { |s| @game.board.cord(s) }.join(" => ")}"
+      if player.ai?
+        if move = player.get_move(@game)
+          from, to = move
+          promotion =
+            case @game.turn
+            when 0
+              @game.board.rank(to) == @game.board.height - 1 ? 'Q' : nil
+            when 1
+              @game.board.rank(to) == 0 ? 'Q' : nil
+            end
+
+          san = @game.move_to_san(from, to, promotion)
+          @changes << @game.make_move(from, to, promotion)
+
+          @pgn.history << san
+          @gb.clear
+          @gb.highlight([from, to])
+        else
+          @log.unshift "AI failed. reverting to human play"
+          @game.players[@game.turn] = Player.new
         end
-      when /(undo|back)/i
-        if last_change = @changes.pop?
-          @game.undo(last_change)
-          @pgn.history.pop
-        end
-      when /moves\s+([a-z]\d)/i
-        if matches = input.match(/[a-z]\d/i)
-          if square = matches[0]?
-            if index = @game.board.index_of(square)
-              if set = @game.moves(index)
-                @gb.highlight(set.moves, "blue")
-                from = "#{set.piece.fen_symbol}#{@game.board.cord(index)}: "
-                to = set.moves.map { |m| @game.board.cord(m) }.join(", ")
-                @log.unshift from + to
+      else
+        input = gets || ""
+
+        case input
+        when /help/i
+          msg = <<-HELP
+            Commands:
+              flip - Flip the board
+              moves [SQUARE] - Show the moves (optionally for a given square)
+              [SAN] - Standard algebraic notation (make a move)
+              [FROM] [TO] - specify move by coordinates
+          HELP
+          msg.lines.reverse.each { |l| @log.unshift(l) }
+        when /flip/i
+          @gb.flip!
+        when /score/i
+          @log.unshift "score: #{@evaluator.board_score(@game)}"
+        when /suggest/i
+          @gb.clear
+          if suggestions = @evaluator.best_moves(@game)
+            suggestions.each do |suggestion|
+              @gb.highlight([suggestion[0]])
+              @gb.highlight([suggestion[1]], "red")
+              @log.unshift "  #{suggestion.map { |s| @game.board.cord(s) }.join(" => ")}"
+            end
+            @log.unshift "suggestions:"
+          end
+        when /(undo|back)/i
+          if last_change = @changes.pop?
+            @game.undo(last_change)
+            @pgn.history.pop
+          end
+        when /moves\s+([a-z]\d)/i
+          if matches = input.match(/[a-z]\d/i)
+            if square = matches[0]?
+              if index = @game.board.index_of(square)
+                if set = @game.moves(index)
+                  @gb.highlight(set.moves, "blue")
+                  from = "#{set.piece.fen_symbol}#{@game.board.cord(index)}: "
+                  to = set.moves.map { |m| @game.board.cord(m) }.join(", ")
+                  @log.unshift from + to
+                end
               end
             end
           end
-        end
-      when /moves/i
-        pieces = @game.board.select do |piece|
-          next if piece.nil?
-          @game.turn == 0 ? piece.white? : piece.black?
-        end
-
-        move_sets = pieces.map do |piece|
-          next unless piece
-          if s = @game.moves(piece.index.as(Int16))
-            @game.remove_illegal_moves(s)
+        when /moves/i
+          pieces = @game.board.select do |piece|
+            next if piece.nil?
+            @game.turn == 0 ? piece.white? : piece.black?
           end
-        end
 
-        move_string = move_sets.map do |set|
-          next unless set
-          next if set.moves.empty?
-          @gb.highlight(set.moves, "blue")
-          from = "#{set.piece.fen_symbol}#{@game.board.cord(set.origin)}: "
-          to = set.moves.map { |m| @game.board.cord(m) }.join(", ")
-          from + to
-        end.compact.join(" | ")
-        @log.unshift move_string
-      when /\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i
-        if input
-          if matches = input.downcase.match(/\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i)
-            from = matches[1]
-            to = matches[2]
-            promo = if matches[3]?
-                      matches[3][0]
-                    end
-            if from && to
-              @gb.clear
-              san = @game.move_to_san(from, to, promo)
-              @changes << @game.make_move(from, to, promo)
-              @pgn.history << san
-              @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
-              @log.unshift "#{san.to_s}: #{from} => #{to}"
+          move_sets = pieces.map do |piece|
+            next unless piece
+            if s = @game.moves(piece.index.as(Int16))
+              @game.remove_illegal_moves(s)
             end
           end
-        end
-      when nil
-      else
-        if input
-          notation = Notation.new(input)
-          from, to = @game.parse_san(notation)
-          if from && to
-            @gb.clear
-            san = @game.move_to_san(from, to, notation.promotion)
-            @changes << @game.make_move(from, to, notation.promotion)
-            @pgn.history << san
-            @gb.highlight([from.to_i16, to.to_i16])
-            @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
+
+          move_string = move_sets.map do |set|
+            next unless set
+            next if set.moves.empty?
+            @gb.highlight(set.moves, "blue")
+            from = "#{set.piece.fen_symbol}#{@game.board.cord(set.origin)}: "
+            to = set.moves.map { |m| @game.board.cord(m) }.join(", ")
+            from + to
+          end.compact.join(" | ")
+          @log.unshift move_string
+        when /\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i
+          if input
+            if matches = input.downcase.match(/\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i)
+              from = matches[1]
+              to = matches[2]
+              promo = if matches[3]?
+                        matches[3][0]
+                      end
+              if from && to
+                @gb.clear
+                san = @game.move_to_san(from, to, promo)
+                @changes << @game.make_move(from, to, promo)
+                @pgn.history << san
+                @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
+                @log.unshift "#{san.to_s}: #{from} => #{to}"
+              end
+            end
+          end
+        when nil
+        else
+          if input
+            notation = Notation.new(input)
+            from, to = @game.parse_san(notation)
+            if from && to
+              @gb.clear
+              san = @game.move_to_san(from, to, notation.promotion)
+              @changes << @game.make_move(from, to, notation.promotion)
+              @pgn.history << san
+              @gb.highlight([from.to_i16, to.to_i16])
+              @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
+            end
           end
         end
       end
