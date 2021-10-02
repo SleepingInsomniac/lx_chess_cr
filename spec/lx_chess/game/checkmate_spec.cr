@@ -15,7 +15,7 @@ describe Game do
         game = Game.new(board: fen.board, players: [Player.new, Player.new])
         game.checkmate?(1).should eq(false)
         san = game.make_move("h5", "f7")
-        debug_board(game, ["h5", "f7"])
+        debug_board(game.board, ["h5", "f7"])
         game.checkmate?(1).should eq(true)
       end
     end

@@ -9,15 +9,6 @@ require "../../src/lx_chess/player"
 include LxChess
 
 describe Game do
-  describe "#score" do
-    it "scores the board" do
-      game = Game.new
-      game.board["e4"] = Piece.from_fen('P')
-      debug_board(game)
-      game.score.should eq(100)
-    end
-  end
-
   describe "#remove_illegal_moves" do
     it "removes illegal moves" do
       game = Game.new players: [Player.new, Player.new]
@@ -27,7 +18,7 @@ describe Game do
 
       if move_set = game.moves("e4")
         move_set = game.remove_illegal_moves(move_set)
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.should eq([36, 44, 52, 60, 20, 12])
       else
         raise "move set was nil"
@@ -79,7 +70,7 @@ describe Game do
       game = Game.new players: [Player.new, Player.new]
       game.board["e1"] = Piece.from_fen('K')
       game.board["e8"] = Piece.from_fen('r')
-      debug_board(game)
+      debug_board(game.board)
       game.in_check?(0).should eq(true)
     end
   end
@@ -134,7 +125,7 @@ describe Game do
       game = Game.new
       game.board["e2"] = Piece.from_fen('P')
       if move_set = game.moves("e2")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e3 e4])
       else
         raise "no moves"
@@ -145,7 +136,7 @@ describe Game do
       game = Game.new
       game.board["e7"] = Piece.from_fen('p')
       if move_set = game.moves("e7")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e6 e5])
       else
         raise "no moves"
@@ -156,7 +147,7 @@ describe Game do
       game = Game.new
       game.board["e3"] = Piece.from_fen('P')
       if move_set = game.moves("e3")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e4])
       else
         raise "no moves"
@@ -167,7 +158,7 @@ describe Game do
       game = Game.new
       game.board["e6"] = Piece.from_fen('p')
       if move_set = game.moves("e6")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
       else
         raise "no moves"
@@ -180,7 +171,7 @@ describe Game do
       game.board["f5"] = Piece.from_fen('p')
       game.board["d5"] = Piece.from_fen('p')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5 d5 f5])
       else
         raise "no moves"
@@ -193,7 +184,7 @@ describe Game do
       game.board["f5"] = Piece.from_fen('P')
       game.board["d5"] = Piece.from_fen('P')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e5])
       else
         raise "no moves"
@@ -206,7 +197,7 @@ describe Game do
       game.board["d5"] = Piece.from_fen('p')
       game.en_passant_target = "d6"
       if move_set = game.moves("e5")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[e6 d6])
       else
         raise "no moves"
@@ -217,7 +208,7 @@ describe Game do
       game = Game.new
       game.board["c3"] = Piece.from_fen('N')
       if move_set = game.moves("c3")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[a4 b5 d5 e4 e2 d1 b1 a2])
       else
         raise "no moves"
@@ -228,7 +219,7 @@ describe Game do
       game = Game.new
       game.board["a1"] = Piece.from_fen('N')
       if move_set = game.moves("a1")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[b3 c2])
       else
         raise "no moves"
@@ -239,7 +230,7 @@ describe Game do
       game = Game.new
       game.board["h1"] = Piece.from_fen('N')
       if move_set = game.moves("h1")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[f2 g3])
       else
         raise "no moves"
@@ -250,7 +241,7 @@ describe Game do
       game = Game.new
       game.board["e4"] = Piece.from_fen('R')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d4 c4 b4 a4
           e5 e6 e7 e8
@@ -266,7 +257,7 @@ describe Game do
       game = Game.new
       game.board["e4"] = Piece.from_fen('B')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d5 c6 b7 a8
           f5 g6 h7
@@ -282,7 +273,7 @@ describe Game do
       game = Game.new
       game.board["e4"] = Piece.from_fen('K')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d4 d5 e5 f5 f4 f3 e3 d3
         ])
@@ -295,7 +286,7 @@ describe Game do
       game = Game.new
       game.board["h4"] = Piece.from_fen('K')
       if move_set = game.moves("h4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           g4 g5 h5 h3 g3
         ])
@@ -308,7 +299,7 @@ describe Game do
       game = Game.new
       game.board["e4"] = Piece.from_fen('Q')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d5 c6 b7 a8
           f5 g6 h7
@@ -329,7 +320,7 @@ describe Game do
       game.board["e4"] = Piece.from_fen('B')
       game.board["f5"] = Piece.from_fen('P')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d5 c6 b7 a8
           f3 g2 h1
@@ -345,7 +336,7 @@ describe Game do
       game.board["e4"] = Piece.from_fen('B')
       game.board["f5"] = Piece.from_fen('p')
       if move_set = game.moves("e4")
-        debug_board(game, move_set.moves)
+        debug_board(game.board, move_set.moves)
         move_set.moves.map { |m| game.board.cord(m) }.should eq(%w[
           d5 c6 b7 a8
           f5

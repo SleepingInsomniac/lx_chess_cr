@@ -14,7 +14,7 @@ describe "Castling" do
       game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
       game.make_move(from: "e1", to: "g1")
-      debug_board(game, ["e1", "g1"])
+      debug_board(game.board, ["e1", "g1"])
       fen.update(game)
       fen.to_s.should eq("8/8/8/8/8/8/8/R4RK1 b kq - 1 1")
     end
@@ -24,7 +24,7 @@ describe "Castling" do
       game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
       game.make_move(from: "e1", to: "c1")
-      debug_board(game, ["e1", "c1"])
+      debug_board(game.board, ["e1", "c1"])
       fen.update(game)
       fen.to_s.should eq("8/8/8/8/8/8/8/2KR3R b kq - 1 1")
     end
@@ -36,7 +36,7 @@ describe "Castling" do
       game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
       game.make_move(from: "e8", to: "g8")
-      debug_board(game, ["e8", "g8"])
+      debug_board(game.board, ["e8", "g8"])
       fen.update(game)
       fen.to_s.should eq("r4rk1/8/8/8/8/8/8/8 b kq - 1 1")
     end
@@ -46,7 +46,7 @@ describe "Castling" do
       game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
       game.make_move(from: "e8", to: "c8")
-      debug_board(game, ["e8", "c8"])
+      debug_board(game.board, ["e8", "c8"])
       fen.update(game)
       fen.to_s.should eq("2kr3r/8/8/8/8/8/8/8 b kq - 1 1")
     end
@@ -58,7 +58,7 @@ describe "Castling" do
     game = Game.new(board: fen.board, players: [Player.new, Player.new])
 
     game.make_move(from: "c1", to: "e1")
-    debug_board(game, ["c1", "e1"])
+    debug_board(game.board, ["c1", "e1"])
     fen.update(game)
     fen.to_s.should eq("8/8/8/8/8/8/8/R2RK3 b kq - 1 1")
   end

@@ -26,7 +26,7 @@ describe Game do
         })
 
         moves = game.parse_san("dxe5")
-        debug_board(game, moves)
+        debug_board(game.board, moves)
         moves.should eq(["d4", "e5"].map { |s| game.board.index_of(s) })
       end
     end
