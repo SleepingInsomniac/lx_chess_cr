@@ -16,8 +16,11 @@ module LxChess
 
     property :bg_dark, :bg_light, :fg_dark, :fg_light
 
+    property show_symbols : Bool = true
+    property show_color : Bool = true
+    property flipped : Bool = false
+
     def initialize(@board : Board)
-      @flipped = false
       @highlights = {} of Int16 => String
 
       @bg_dark = :green
@@ -92,9 +95,18 @@ module LxChess
 
           if piece
             foreground = piece.white? ? @fg_light : @fg_dark
-            io << piece.symbol(true).colorize.back(background).fore(foreground) << " ".colorize.back(background)
+            piece_string = (@show_symbols ? piece.symbol(true) : piece.fen_symbol) + " "
+            if @show_color
+              io << piece_string.colorize.back(background).fore(foreground)
+            else
+              io << piece_string
+            end
           else
-            io << "  ".colorize.back(background)
+            if @show_color
+              io << "  ".colorize.back(background)
+            else
+              io << "  "
+            end
           end
         end
 
