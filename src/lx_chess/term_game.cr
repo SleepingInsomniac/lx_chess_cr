@@ -9,6 +9,15 @@ require "./change"
 module LxChess
   # Represents a chess game played through the terminal
   class TermGame
+    HELP_TEXT = <<-HELP
+      Commands:
+        flip            - Flip the board
+        moves [SQUARE]  - Show the moves (optionally for a given square)
+        [SAN]           - Standard algebraic notation (make a move)
+        [FROM] [TO]     - specify move by coordinates
+    HELP
+    LOG_LENGTH = 20
+
     property gb : TermBoard
     getter log = [] of String
     property pgn : PGN = PGN.new
@@ -31,6 +40,8 @@ module LxChess
     end
 
     def run!
+      clear_screen
+      show_help
       loop do
         draw
         break if @game.checkmate?
@@ -67,14 +78,7 @@ module LxChess
 
         case input
         when /help/i
-          msg = <<-HELP
-            Commands:
-              flip - Flip the board
-              moves [SQUARE] - Show the moves (optionally for a given square)
-              [SAN] - Standard algebraic notation (make a move)
-              [FROM] [TO] - specify move by coordinates
-          HELP
-          msg.lines.reverse.each { |l| @log.unshift(l) }
+          show_help
         when /flip/i
           @gb.flip!
         when /score/i
@@ -134,16 +138,9 @@ module LxChess
             if matches = input.downcase.match(/\s*([a-z]\d)\s*([a-z]\d)\s*(?:=\s*)?([RNBQ])?/i)
               from = matches[1]
               to = matches[2]
-              promo = if matches[3]?
-                        matches[3][0]
-                      end
+              promo = matches[3]? ? matches[3][0] : nil
               if from && to
-                @gb.clear
-                san = @game.move_to_san(from, to, promo)
-                @changes << @game.make_move(from, to, promo)
-                @pgn.history << san
-                @gb.highlight([@game.board.index_of(from), @game.board.index_of(to)])
-                @log.unshift "#{san.to_s}: #{from} => #{to}"
+                make_move(from, to, promo)
               end
             end
           end
@@ -153,12 +150,7 @@ module LxChess
             notation = Notation.new(input)
             from, to = @game.parse_san(notation)
             if from && to
-              @gb.clear
-              san = @game.move_to_san(from, to, notation.promotion)
-              @changes << @game.make_move(from, to, notation.promotion)
-              @pgn.history << san
-              @gb.highlight([from.to_i16, to.to_i16])
-              @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
+              make_move(from, to, notation.promotion)
             end
           end
         end
@@ -170,7 +162,7 @@ module LxChess
         @log.unshift msg
       end
     ensure
-      until log.size < 8
+      until log.size < LOG_LENGTH
         log.pop
       end
     end
@@ -186,6 +178,28 @@ module LxChess
     def clear_screen
       @term.clear
       @term.clear_scroll
+    end
+
+    def show_help
+      HELP_TEXT.lines.reverse.each { |l| @log.unshift(l) }
+    end
+
+    # =====================
+    # = Game Manipulation =
+    # =====================
+
+    def make_move(from : String, to : String, promotion : Char? = nil)
+      from, to = @game.board.indexes_of([from, to])
+      make_move(from, to, promotion)
+    end
+
+    def make_move(from : Int16, to : Int16, promotion : Char? = nil)
+      @gb.clear
+      san = @game.move_to_san(from, to, promotion)
+      @changes << @game.make_move(from, to, promotion)
+      @pgn.history << san
+      @gb.highlight([from, to])
+      @log.unshift "#{san.to_s}: #{@game.board.cord(from)} => #{@game.board.cord(to)}"
     end
 
     # ===================

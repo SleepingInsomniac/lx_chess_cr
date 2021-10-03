@@ -75,6 +75,10 @@ module LxChess
       index_of(x, y)
     end
 
+    def indexes_of(cords : Array(String))
+      cords.map { |c| index_of(c) }
+    end
+
     # Convert an *index* into a human coordinate (ex: `a1`)
     def cord(index : Int)
       y, x = index.divmod(@width)

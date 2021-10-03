@@ -83,5 +83,4 @@ if theme = options["theme"]?
   end
 end
 
-term_game.clear_screen
 term_game.run!
