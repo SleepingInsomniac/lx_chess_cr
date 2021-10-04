@@ -47,6 +47,7 @@ module LxChess
         break if @game.checkmate?
         update
       end
+      draw
     end
 
     def update
@@ -54,14 +55,7 @@ module LxChess
 
       if player.ai?
         if move = player.get_move(@game)
-          from, to = move
-          promotion =
-            case @game.turn
-            when 0
-              @game.board.rank(to) == @game.board.height - 1 ? 'Q' : nil
-            when 1
-              @game.board.rank(to) == 0 ? 'Q' : nil
-            end
+          from, to, promotion = move
 
           san = @game.move_to_san(from, to, promotion)
           @changes << @game.make_move(from, to, promotion)
@@ -86,10 +80,11 @@ module LxChess
         when /suggest/i
           @gb.clear
           if suggestions = @evaluator.best_moves(@game)
-            suggestions.each do |suggestion|
-              @gb.highlight([suggestion[0]])
-              @gb.highlight([suggestion[1]], "red")
-              @log.unshift "  #{suggestion.map { |s| @game.board.cord(s) }.join(" => ")}"
+            suggestions.best_branches.each do |branch|
+              from, to, _ = branch
+              @gb.highlight([from])
+              @gb.highlight([to], "red")
+              @log.unshift "  #{@game.board.cord(from)} => #{@game.board.cord(to)}"
             end
             @log.unshift "suggestions:"
           end
@@ -146,7 +141,7 @@ module LxChess
           end
         when nil
         else
-          if input
+          unless input.blank?
             notation = Notation.new(input)
             from, to = @game.parse_san(notation)
             if from && to

@@ -2,6 +2,7 @@ require "./board"
 require "./game"
 require "./player"
 require "./piece"
+require "./move_tree"
 
 module LxChess
   class Computer < Player
@@ -10,19 +11,44 @@ module LxChess
     end
 
     def get_move(game : Game, turn : Int8? = nil)
-      moves = best_moves(game, turn)
-      moves.any? ? moves.sample : nil
+      tree = best_moves(game, turn)
+
+      Log.debug do
+        "Best moves: #{tree.best_branches.map { |b| [game.board.cord(b[0]), game.board.cord(b[1])].join(" => ") + " : #{b[2].score}" }.join(", ")}"
+      end
+      move = tree.best_branches.sample
+      from, to, _ = move
+
+      raise "from is nil" unless from_piece = game.board[from]
+
+      promotion =
+        case game.turn
+        when 0
+          if from_piece.pawn?
+            game.board.rank(to) == game.board.height - 1 ? 'Q' : nil
+          end
+        when 1
+          if from_piece.pawn?
+            game.board.rank(to) == 0 ? 'Q' : nil
+          end
+        end
+
+      Log.debug { "Chose random best move: #{game.board.cord(from)} => #{game.board.cord(to)}" }
+      {from, to, promotion}
     end
 
     # Evaluate the score of a given *board*
     # TODO: more positional analysis
-    def board_score(game : Game)
+    def board_score(game : Game, turn : Int8? = nil)
+      turn = turn || game.turn
+
       score = 0
+
       if game.checkmate?
         score += game.turn == 0 ? 10_000 : -10_000
       end
 
-      score + game.board.reduce(0) do |score, piece|
+      score += game.board.reduce(0) do |score, piece|
         next score unless piece
         val =
           case piece.id
@@ -36,11 +62,18 @@ module LxChess
           end
         piece.black? ? score - val : score + val
       end
+
+      return score if game.players.none?
+
+      # If the player is black, a negative value is good
+      if game.players[game.turn] == self
+        score.abs
+      else
+        -score.abs
+      end
     end
 
-    # Generate an array of moves (from => to) which result in an even or best score
-    # TODO: promotion, depth, pruning
-    def best_moves(game : Game, turn : Int8? = nil) : Array(Array(Int16))
+    def move_sets(game : Game, turn : Int8? = nil)
       turn = turn || game.turn
 
       move_sets = game.pieces_for(turn).map do |piece|
@@ -48,29 +81,57 @@ module LxChess
           game.remove_illegal_moves(set)
         end
       end.compact
+    end
 
-      _best_moves = [] of Array(Int16)
-      best_score = 0
+    # Generate an array of moves (from => to) which result in an even or best score
+    # TODO: promotion, pruning
+    def best_moves(game : Game, turn : Int8? = nil, depth = 0, root_tree : MoveTree? = nil) # : Array(Array(Int16))
+      turn = turn || game.turn
 
-      move_sets.each do |set|
+      Log.debug { "Evaluating best moves for turn: #{turn}, depth: #{depth}..." }
+
+      if root_tree.nil?
+        root_tree = MoveTree.new score: board_score(game, turn), turn: turn
+      end
+
+      Log.debug { "Current Board score: #{root_tree.score}, turn: #{turn}" }
+
+      move_sets(game, turn).each do |set|
         origin = set.piece.index
 
         set.moves.each do |move|
           game.tmp_move(from: origin, to: move) do
-            current_score = board_score(game)
+            current_score = board_score(game, turn)
 
-            if current_score > best_score
-              best_score = current_score
-              _best_moves = [] of Array(Int16)
-              _best_moves << [origin, move]
-            elsif current_score == best_score
-              _best_moves << [origin, move]
+            tree = MoveTree.new(score: current_score, turn: game.next_turn(turn))
+            root_tree << {origin, move, tree}
+          end
+        end
+      end
+
+      Log.debug { "Considered #{root_tree.branches.size} moves at depth #{depth}" }
+
+      if depth < 2
+        root_tree.branches.each do |branch|
+          from, to, tree = branch
+          Log.debug { "Considering #{game.board.cord(from)} => #{game.board.cord(to)} ..." }
+
+          game.tmp_move(from: from, to: to) do
+            best_moves(game, turn, depth + 1, tree)
+
+            if tree.score > root_tree.score
+              root_tree.score = tree.score
+              root_tree.best_branches.truncate(0, 0)
+            end
+
+            if tree.score == root_tree.score
+              root_tree.best_branches << branch
             end
           end
         end
       end
 
-      _best_moves
+      root_tree
     end
   end
 end

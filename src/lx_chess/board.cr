@@ -8,6 +8,12 @@ module LxChess
 
     LETTERS = ('a'..'z').to_a
 
+    # Convert an *index* into a human coordinate (ex: `a1`)
+    def self.cord(index : Int, width = 8)
+      y, x = index.divmod(width)
+      "#{LETTERS[x]}#{y + 1}"
+    end
+
     property :width, :height, :squares
 
     def initialize(@width : Int16 = 8, @height : Int16 = 8)

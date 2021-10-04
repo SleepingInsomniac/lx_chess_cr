@@ -1,5 +1,7 @@
 require "./lx_chess/*"
+
 require "option_parser"
+require "log"
 
 options = {} of String => String | Nil
 
@@ -28,18 +30,26 @@ OptionParser.parse do |parser|
     options["pgn_path"] = path
   end
 
-  parser.on("--player-white=PLAYER", "set the type of player") do |player_type|
+  parser.on("--player-white=PLAYER", "set the type of player (human|computer)") do |player_type|
     case player_type
     when /c(omputer)?/i
       options["player_white"] = "computer"
     end
   end
 
-  parser.on("--player-black=PLAYER", "set the type of player") do |player_type|
+  parser.on("--player-black=PLAYER", "set the type of player (human|computer)") do |player_type|
     case player_type
     when /c(omputer)?/i
       options["player_black"] = "computer"
     end
+  end
+
+  parser.on("--log=FILE", "log to file") do |file_Path|
+    options["log_file"] = file_Path
+  end
+
+  parser.on("--log-level=LEVEL", "set log level, 0-7") do |level|
+    options["log_level"] = level
   end
 
   parser.invalid_option do |flag|
@@ -47,6 +57,12 @@ OptionParser.parse do |parser|
     STDERR.puts parser
     exit(1)
   end
+end
+
+if log_file = options["log_file"]?
+  log_level = options["log_level"]? || "2"
+  log_level = Log::Severity.from_value(log_level.to_i8)
+  Log.setup(log_level, Log::IOBackend.new(File.new(log_file, "a+")))
 end
 
 players = [] of LxChess::Player
