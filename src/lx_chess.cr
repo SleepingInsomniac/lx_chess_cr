@@ -8,10 +8,6 @@ options = {} of String => String | Nil
 OptionParser.parse do |parser|
   parser.banner = "Usage: lx_chess [fen]"
 
-  parser.on("--fen=FEN", "use fen string for board") do |fen_string|
-    options["fen_string"] = fen_string
-  end
-
   parser.on("-h", "--help", "Show this help") do
     puts parser
     exit
@@ -22,13 +18,25 @@ OptionParser.parse do |parser|
     exit
   end
 
+  parser.separator "\nGame options"
+
+  # parser.on("-e", "--eval", "Evaluate a given position") do
+  #   options["evaluate"] = "true"
+  # end
+
+  parser.on("-f FEN", "--fen=FEN", "use fen string for board") do |fen_string|
+    options["fen_string"] = fen_string
+  end
+
   parser.on("--board-theme=COLOR", "Set the board theme") do |color|
     options["theme"] = color
   end
 
-  parser.on("--open=PGN", "open a pgn file") do |path|
+  parser.on("-o PGN", "--open=PGN", "open a pgn file") do |path|
     options["pgn_path"] = path
   end
+
+  parser.separator "\nPlayer options"
 
   parser.on("--player-white=PLAYER", "set the type of player (human|computer)") do |player_type|
     case player_type
@@ -43,6 +51,8 @@ OptionParser.parse do |parser|
       options["player_black"] = "computer"
     end
   end
+
+  parser.separator "\nDebugging options"
 
   parser.on("--log=FILE", "log to file") do |file_Path|
     options["log_file"] = file_Path

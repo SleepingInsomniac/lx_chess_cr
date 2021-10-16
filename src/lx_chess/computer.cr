@@ -86,15 +86,15 @@ module LxChess
     # Generate an array of moves (from => to) which result in an even or best score
     # TODO: promotion, pruning
     def best_moves(game : Game, turn : Int8? = nil, depth = 0, root_tree : MoveTree? = nil) # : Array(Array(Int16))
-      turn = turn || game.turn
+      Log.debug { "=================================== Best moves ===================================" }
 
-      Log.debug { "Evaluating best moves for turn: #{turn}, depth: #{depth}..." }
+      turn = turn || game.turn
 
       if root_tree.nil?
         root_tree = MoveTree.new score: board_score(game, turn), turn: turn
       end
 
-      Log.debug { "Current Board score: #{root_tree.score}, turn: #{turn}" }
+      Log.debug { "Evaluating best moves for turn: #{turn}, depth: #{depth}, current score: #{root_tree.score} ..." }
 
       move_sets(game, turn).each do |set|
         origin = set.piece.index
@@ -109,17 +109,27 @@ module LxChess
         end
       end
 
-      Log.debug { "Considered #{root_tree.branches.size} moves at depth #{depth}" }
+      Log.debug { "\n" + root_tree.to_s(IO::Memory.new).to_s }
+
+      Log.debug { "Found #{root_tree.branches.size} moves" }
+      Log.debug do
+        current_bests = root_tree.best_branches.map { |b| [b[0], b[1]].map { |c| game.board.cord(c) }.join(" => ") }.join(", ")
+        "current best branches: #{current_bests}"
+      end
 
       if depth < 2
         root_tree.branches.each do |branch|
           from, to, tree = branch
-          Log.debug { "Considering #{game.board.cord(from)} => #{game.board.cord(to)} ..." }
+          Log.debug do
+            "Considering branch: #{game.board.cord(from)} => #{game.board.cord(to)} ..."
+          end
 
           game.tmp_move(from: from, to: to) do
             best_moves(game, turn, depth + 1, tree)
 
             if tree.score > root_tree.score
+              Log.debug { "Found better branch: #{game.board.cord(from)} => #{game.board.cord(to)} : #{root_tree.score} => #{tree.score}" }
+
               root_tree.score = tree.score
               root_tree.best_branches.truncate(0, 0)
             end
